@@ -1,2 +1,8 @@
 plots/*
 outputs/*
+
+.DS_Store
+__pycache__/
+lecanemab_model.egg-info/
+output/
+parameters/__pycache__/
