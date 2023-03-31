@@ -11,8 +11,8 @@ from lecanemab_model import LecanemabModel
 from solution import Solution
 
 #random.seed(1)
-n = 100
-model_type = 'suvr'
+n = 500
+model_type = 'ab'
 
 # bi-weekly
 results = pd.DataFrame()
@@ -22,10 +22,10 @@ dict_of_cols = {}
 results_m = pd.DataFrame()
 dict_of_cols_m = {}
 
-model_bw = LecanemabModel(model_type, 10, 3.5, 1080, median_patient=True, param_type='noiiv')
+model_bw = LecanemabModel(model_type, 10, 3.5, 540, median_patient=True, param_type='noiiv')
 model_bw()
 
-model_m = LecanemabModel(model_type, 10, 30, 1080, median_patient=True, param_type='noiiv')
+model_m = LecanemabModel(model_type, 10, 30, 540, median_patient=True, param_type='noiiv')
 model_m()
 
 # order: baseline SUVr, Kin, Emax, EC50; baseline AB, Kout, slope; baseline ptau, Kout, slope
@@ -36,31 +36,36 @@ var = [value**2 for value in se]
 cov = np.zeros((len(var), len(var)))
 np.fill_diagonal(cov, var)
 
-parameter_sample = np.random.multivariate_normal(means, cov, n)
+parameter_sample = pd.DataFrame()
+pairs = zip(means, se)
+for i, j in pairs:
+    sample = np.random.normal(i, j, n)
+    parameter_sample = pd.concat([parameter_sample, pd.DataFrame(sample)], axis=1)
+
+#parameter_sample = np.random.multivariate_normal(means, cov, n)
 
 for i in range(n):
-    sample = parameter_sample[i]
+    #sample = parameter_sample[i]
+    sample = parameter_sample.loc[i, :].values.flatten().tolist()
     models = [model_m, model_bw]
     for model in models:
         # Overwrite parameters for this simulation
         # model.CL = 0.0181 * 24
         # model.V1 = 3.22
         # model.V2 = 2.19
-        model.baseline_SUVr = sample[0]
-        model.SUVr_Kin = sample[1] / (365*2)
+        model.baseline_SUVr = 1.38 #sample[0]
+        model.SUVr_Kin = sample[1] / 730
         model.SUVr_Kout = model.SUVr_Kin/model.baseline_SUVr
         model.Emax = sample[2]
         model.SUVr_EC50 = sample[3]
         model.baseline_Abeta = sample[4]
-        model.Abeta_Kout = sample[5] / (365*2)
+        model.Abeta_Kout = sample[5] / 730
         model.Abeta_slope = sample[6]
         model.Abeta_Kin = model.Abeta_Kout * model.baseline_Abeta
         model.baseline_tau = sample[7]
-        model.tau_Kout = sample[8] / (365*2)
+        model.tau_Kout = sample[8] / 730
         model.tau_slope = sample[9]
         model.tau_Kin = model.tau_Kout * model.baseline_tau
-        # need to add the rest for the other parameters after have implemented those equations.
-
     # Solve model
 
     solver_bw = Solution(model_bw, 0, 1080, 1) # 12960 hours = 18 months; 1080 half days
