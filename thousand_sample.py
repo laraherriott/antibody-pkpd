@@ -28,7 +28,7 @@ for i in range (n):
 
     model_type = 'suvr'
 
-    model = LecanemabModel(model_type, 10, 3.5, 540)
+    model = LecanemabModel(model_type, 10, (14*24), (24*540))
     model()
 
     metadata.loc[len(metadata)] = [model.patient.age_SUVr, model.patient.weight_SUVr, model.patient.sex, model.patient.ADA,
@@ -36,7 +36,7 @@ for i in range (n):
 
     # Solve model
 
-    solver = Solution(model, 0, 540, 1) # 12960 hours = 18 months; 1080 half days
+    solver = Solution(model, 0, (24*540), 1) # 12960 hours = 18 months; 1080 half days
 
     # Save values
 
@@ -54,7 +54,7 @@ for i in range (n):
 
     # Set up model - monthly dosing
 
-    model_m = LecanemabModel(model_type, 10, 30, 540)
+    model_m = LecanemabModel(model_type, 10, (24*28), (24*540))
     model_m()
 
     metadata_m.loc[len(metadata_m)] = [model_m.patient.age_SUVr, model_m.patient.weight_SUVr, model_m.patient.sex, model_m.patient.ADA,
@@ -62,7 +62,7 @@ for i in range (n):
 
     # Solve model
 
-    solver_m = Solution(model_m, 0, 540, 1) # 12960 hours = 18 months; 1080 half days
+    solver_m = Solution(model_m, 0, (24*540), 1) # 12960 hours = 18 months; 1080 half days
 
     # Save values
 

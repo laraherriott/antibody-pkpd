@@ -11,7 +11,7 @@ from lecanemab_model import LecanemabModel
 from solution import Solution
 
 #random.seed(1)
-n = 10
+n = 1
 model_type = 'suvr'
 
 # bi-weekly
@@ -68,27 +68,27 @@ for i in range(n):
 
     # Save values
 
-    solutions = solver_bw.solve()
+    solutions, t_list = solver_bw.solve()
 
     if i == 0:
-        time = solutions.t
+        time = t_list
         results['time'] = time
 
-    biomarker = solutions.y[2]
-    central_L = solutions.y[0]
-    peripheral_L = solutions.y[1]
+    biomarker = solutions[2]
+    central_L = solutions[0]
+    peripheral_L = solutions[1]
 
     dict_of_cols['{}{}'.format(model_type, i)] = biomarker
 
-    solutions_m = solver_m.solve()
+    solutions_m, t_list_m = solver_m.solve()
 
     if i == 0:
-        time = solutions_m.t
+        time = t_list_m
         results_m['time'] = time
 
-    biomarker_m = solutions_m.y[2]
-    central_L_m = solutions_m.y[0]
-    peripheral_L_m = solutions_m.y[1]
+    biomarker_m = solutions_m[2]
+    central_L_m = solutions_m[0]
+    peripheral_L_m = solutions_m[1]
 
     dict_of_cols_m['{}{}'.format(model_type, i)] = biomarker_m
 
@@ -141,10 +141,8 @@ plt.legend()
 if model_type == 'suvr':
     plt.ylim((1, 1.4))
     plt.axhline(y=1.17, linestyle='dashed', color = 'black')
-    plt.axvline(x=10080, linestyle='dashed', color = 'red')
 plt.suptitle("Change in {} over 18 months treatment".format(model_type), y=1.05, fontsize=18)
 plt.title("{} profiles for {} PD parameter samples".format(model_type, n), fontsize=10)
 
-#plt.show()
-plt.savefig('plots/{}_biweekly_monthly_{}_param_ldosa.png'.format(model_type, n))
-
+plt.show()
+#plt.savefig('plots/{}_biweekly_monthly_{}_param.png'.format(model_type, n))

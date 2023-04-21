@@ -48,3 +48,20 @@ class Parameters:
         self.random_tau_baseline = 0.1
         self.random_tau_slope = 0.1
 
+class AducanumabParams:
+    def __init__(self):
+        self.plasma_vol = 3
+        self.csf_vol = 3
+        self.bisf_vol = 3
+
+        # plasma parameters
+        # k_synth = 
+        # k_clearapp = 
+        # k_onPP = 
+        # k_offBACE = 
+
+        # CSF parameters
+
+        # BISF parameters
+
+        # rate parameters

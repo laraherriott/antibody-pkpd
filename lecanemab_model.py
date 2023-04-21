@@ -22,8 +22,12 @@ class LecanemabModel:
         else:
             self.patient = Patient()
         self.dose = dose
-        self.interval = dose_interval
-        self.final_dose = final_dose
+
+        self.dose_list = []
+        i = 0
+        while i <= final_dose:
+            self.dose_list.append(i)
+            i += dose_interval
 
         self.PD = PD_model
 
@@ -55,8 +59,8 @@ class LecanemabModel:
         # note baseline acts as y0 for SUVr
         self.Emax = (self.PK_params.SUVr_Emax * ((age/72) ** self.PK_params.age_Emax) *
                      math.exp(random.normalvariate(0, self.PK_params.random_Emax)))
-        self.SUVr_Kin = self.PK_params.SUVr_Kin / 365 
-        #self.SUVr_Kin = self.PK_params.SUVr_Kin / 8760 # this is number for per hour model
+        #self.SUVr_Kin = self.PK_params.SUVr_Kin / 365 
+        self.SUVr_Kin = self.PK_params.SUVr_Kin / 8760 # this is number for per hour model
         self.SUVr_EC50 = self.PK_params.SUVr_EC50
         self.SUVr_Kout = self.SUVr_Kin/self.baseline_SUVr
 
@@ -77,9 +81,8 @@ class LecanemabModel:
         self.tau_Kin = self.tau_Kout * self.baseline_tau
     
     def SUVr_PD(self, t, y): # y = [Lcent, Lper, SUVr]
-        dose = DoseFn(self.dose, self.interval, self.final_dose, self.patient)
         C1L = y[0]/self.V1
-        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + dose.eval_at(t)
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dosefn(self.dose, self.dose_list, self.patient, t)
         dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
         dSUVr_dt = self.SUVr_Kin - (y[2] * self.SUVr_Kout * (1 + ((self.Emax * C1L)/(self.SUVr_EC50 + C1L))))
 
@@ -121,6 +124,18 @@ class LecanemabModel:
         dYdt = [dLcent_dt, dLper_dt, dSUVr_dt, dAB_dt, dtau_dt]
 
         return dYdt
+    
+    def dosefn(self, dose, dose_list, patient, t):
+        infusion = dose * patient.weight_SUVr
+        f = 0.5
+        delta = 0.1
+
+        sol = 0
+        for n in dose_list:
+            if t >=(n-0.5) and t<=(n+1.5):
+                sol =  ((infusion/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*(t-n-0.5)*f)/delta)) + infusion/2
+
+        return sol
 
     def __call__(self):
         self.PK_model(self.patient.albumin, self.patient.sex, self.patient.weight_SUVr,
@@ -136,3 +151,96 @@ class LecanemabModel:
             self.SUVr_fixed(self.patient.APOE, self.patient.age_SUVr)
             self.Abeta_fixed()
             self.tau_fixed(self.patient.weight_SUVr)
+
+class Pharmacokinetic:
+    def __init__(self, f0, f1, epsilon, regimen):
+        self.f0 = f0
+        self.f1 = f1
+        self.e = epsilon
+        self.patient = FixedPatient()
+        self.PK_params = Parameters()
+
+        print(f0*self.patient.weight_SUVr)
+
+        self.CL = self.PK_params.clearance
+        self.V1 = self.PK_params.volume1
+        self.V2 = self.PK_params.volume2
+        self.Q = self.PK_params.inter_compartment
+
+        self.PD = regimen
+
+        if regimen == 'constant':
+            self.dose = self.constant_dose
+    
+        elif regimen == 'sine':
+            self.dose = self.sine_dose
+
+        elif regimen == 'narrow_sine':
+            self.dose = self.narrow_sine_dose
+
+        elif regimen == 'narrower_sine':
+            self.dose = self.narrower_sine_dose
+    
+    def constant(self, t, y):
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dose(self.f0, self.f1, self.e, t)
+        dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
+
+        dYdt = [dLcent_dt, dLper_dt]
+
+        return dYdt
+    
+    def sine(self, t, y):
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dose(self.f0, self.f1, self.e, t)
+        dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
+
+        dYdt = [dLcent_dt, dLper_dt]
+
+        return dYdt
+    
+    def narrow_sine(self, t, y):
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dose(self.f0, self.f1, self.e, t)
+        dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
+
+        dYdt = [dLcent_dt, dLper_dt]
+
+        return dYdt
+    
+    def narrower_sine(self, t, y):
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dose(self.f0, self.f1, self.e, t)
+        dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
+
+        dYdt = [dLcent_dt, dLper_dt]
+
+        return dYdt
+    
+    def smooth_square(self, t, y):
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dosefn(self.f0, [10], self.patient, t)
+        dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
+
+        dYdt = [dLcent_dt, dLper_dt]
+
+        return dYdt
+    
+    def constant_dose(self, f0, f1, e, t):
+        return f0
+    
+    def sine_dose(self, f0, f1, e, t):
+        return f0 + f1*math.sin(t)
+    
+    def narrow_sine_dose(self, f0, f1, e, t):
+        return f0 + f1*math.sin(t/e)
+    
+    def narrower_sine_dose(self, f0, f1, e, t):
+        return f0 + f1*math.sin(t/0.1)
+    
+    def dosefn(self, dose, dose_list, patient, t):
+        infusion = dose * patient.weight_SUVr
+        f = 0.5
+        delta = 0.1
+
+        sol = 0
+        for n in dose_list:
+            if t >=(n-0.5) and t<=(n+1.5):
+                sol =  ((infusion/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*(t-n-0.5)*f)/delta)) + infusion/2
+
+        return sol

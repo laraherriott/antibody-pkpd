@@ -46,14 +46,14 @@ class DeltaFn:
             return 0
         
 class StepFn:
-    def __init__(self, center: float, magnitude: float, time_list, step=0.3):
+    def __init__(self, center: float, magnitude: float, time_list, step=1):
         self.center = center
-        self.magnitude = magnitude
+        self.magnitude = magnitude/step
         self.step = step
         self.time_list = time_list
 
     def eval_at(self, t):
-        t_range = [self.center - self.step/2, self.center + self.step/2]
+        t_range = [self.center, self.center + self.step]
         if t >= t_range[0] and t <= t_range[1]:
             return self.magnitude
             
@@ -73,8 +73,8 @@ class DoseFn:
         '''
         params:
         dose: size of instantaneous doses, in mg/kg
-        interval: time between doses, in days
-        final_dose: day of final dose
+        interval: time between doses, in time units of choice
+        final_dose: time of final dose
         '''
 
         # note to self it seems still to be doing this at every time step
@@ -83,8 +83,8 @@ class DoseFn:
         self.dose_times = []
         t = 1
         self.dose_times.append(t)
-        while t <= (final_dose * 2):
-            next_time = t + (interval*2)
+        while t <= (final_dose):
+            next_time = t + (interval)
             self.dose_times.append(next_time)
             t = next_time
 
@@ -103,8 +103,10 @@ class DoseFn:
         result = []
         for t in range(n):
             result_t = 0
-            for i in range(len(self.deltainput)):
-                result_t += self.deltainput[i].eval_at(t)
+            if t in self.dose_times:
+                for i in range(len(self.deltainput)):
+                    if t == self.dose_times[i]:
+                        result_t += self.deltainput[i].eval_at(t)
             result.append(result_t)
         return result
 
@@ -114,7 +116,9 @@ class DoseFn:
         '''
         
         result = 0
-        for i in range(len(self.deltainput)):
-            result += self.deltainput[i].eval_at(t)
+        if t in self.dose_times:
+            for i in range(len(self.deltainput)):
+                if t == self.dose_times[i]:
+                    result += self.deltainput[i].eval_at(t)
 
         return result
