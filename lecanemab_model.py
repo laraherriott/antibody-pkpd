@@ -28,7 +28,6 @@ class LecanemabModel:
         while i <= final_dose:
             self.dose_list.append(i)
             i += dose_interval
-
         self.PD = PD_model
 
     def PK_model(self, albumin, sex, weight, ada, race, process):
@@ -59,6 +58,7 @@ class LecanemabModel:
         # note baseline acts as y0 for SUVr
         self.Emax = (self.PK_params.SUVr_Emax * ((age/72) ** self.PK_params.age_Emax) *
                      math.exp(random.normalvariate(0, self.PK_params.random_Emax)))
+
         #self.SUVr_Kin = self.PK_params.SUVr_Kin / 365 
         self.SUVr_Kin = self.PK_params.SUVr_Kin / 8760 # this is number for per hour model
         self.SUVr_EC50 = self.PK_params.SUVr_EC50
@@ -67,7 +67,7 @@ class LecanemabModel:
     def Abeta_fixed(self):
         self.baseline_Abeta = (self.PK_params.AB42_40_baseline * 
                                math.exp(random.normalvariate(0, self.PK_params.random_AB42_40_baseline)))
-        self.Abeta_Kout = self.PK_params.AB42_40_Kout / 365
+        self.Abeta_Kout = self.PK_params.AB42_40_Kout / 730
         self.Abeta_slope = (self.PK_params.AB42_40_slope * 
                             math.exp(random.normalvariate(0, self.PK_params.random_AB42_40_slope)))
         self.Abeta_Kin = self.Abeta_Kout * self.baseline_Abeta
@@ -75,7 +75,7 @@ class LecanemabModel:
     def tau_fixed(self, weight):
         self.baseline_tau = (self.PK_params.tau_baseline * ((weight/72.2)**self.PK_params.weight_tau_baseline) *
                              math.exp(random.normalvariate(0, self.PK_params.random_tau_baseline)))
-        self.tau_Kout = self.PK_params.tau_Kout / 365
+        self.tau_Kout = self.PK_params.tau_Kout / 730
         self.tau_slope = (self.PK_params.tau_slope * 
                           math.exp(random.normalvariate(0, self.PK_params.random_tau_slope)))
         self.tau_Kin = self.tau_Kout * self.baseline_tau

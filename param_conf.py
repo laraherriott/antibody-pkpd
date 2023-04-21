@@ -11,6 +11,7 @@ from lecanemab_model import LecanemabModel
 from solution import Solution
 
 #random.seed(1)
+
 n = 10
 model_type = 'suvr'
 
@@ -36,10 +37,17 @@ var = [value**2 for value in se]
 cov = np.zeros((len(var), len(var)))
 np.fill_diagonal(cov, var)
 
-parameter_sample = np.random.multivariate_normal(means, cov, n)
+parameter_sample = pd.DataFrame()
+pairs = zip(means, se)
+for i, j in pairs:
+    sample = np.random.normal(i, j, n)
+    parameter_sample = pd.concat([parameter_sample, pd.DataFrame(sample)], axis=1)
+
+#parameter_sample = np.random.multivariate_normal(means, cov, n)
 
 for i in range(n):
-    sample = parameter_sample[i]
+    #sample = parameter_sample[i]
+    sample = parameter_sample.loc[i, :].values.flatten().tolist()
     models = [model_m, model_bw]
     for model in models:
         # Overwrite parameters for this simulation
@@ -59,8 +67,6 @@ for i in range(n):
         model.tau_Kout = sample[8] / (365*24)
         model.tau_slope = sample[9]
         model.tau_Kin = model.tau_Kout * model.baseline_tau
-        # need to add the rest for the other parameters after have implemented those equations.
-
     # Solve model
 
     solver_bw = Solution(model_bw, 0, 12960, 1) # 12960 hours = 18 months; 1080 half days
