@@ -40,17 +40,13 @@ class Solution:
             self.y0 = [0, 0]
 
     def solve(self):
-        # solution = scipy.integrate.solve_ivp(fun=lambda t, y: self.name(t, y),
-        #                                      t_span=[self.t_eval[0], self.t_eval[-1]],
-        #                                      y0=self.y0,
-        #                                      t_eval=self.t_eval,
-        #                                      max_step = 1,
-        #                                      first_step = 1,
-        #                                      rtol = 1e90,
-        #                                      atol = 1e90,
-        #                                      method = 'LSODA')
+        solution = scipy.integrate.solve_ivp(fun=lambda t, y: self.name(t, y),
+                                             t_span=[self.t_eval[0], self.t_eval[-1]],
+                                             y0=self.y0,
+                                             t_eval=self.t_eval,
+                                             max_step = 0.1)
 
-        solution = self.euler([self.t_start, self.t_end], self.y0, self.name)
+        #solution = self.euler([self.t_start, self.t_end], self.y0, self.name)
         
         return solution
 

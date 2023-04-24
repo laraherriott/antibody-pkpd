@@ -12,8 +12,8 @@ from solution import Solution
 
 #random.seed(1)
 
-n = 10
-model_type = 'suvr'
+n = 1
+model_type = 'tau'
 
 # bi-weekly
 results = pd.DataFrame()
@@ -148,9 +148,9 @@ if model_type == 'suvr':
     plt.ylim((1, 1.4))
     plt.axhline(y=1.17, linestyle='dashed', color = 'black')
     plt.axvline(x=10080, linestyle='dashed', color = 'red')
-plt.suptitle("Change in {} over 18 months treatment".format(model_type), y=1.05, fontsize=18)
-plt.title("{} profiles for {} PD parameter samples".format(model_type, n), fontsize=10)
+plt.suptitle("Change in {} over 18 months treatment (RK)".format(model_type), y=1.05, fontsize=18)
+plt.title("{} profiles for {} PD parameter samples (RK)".format(model_type, n), fontsize=10)
 
 #plt.show()
-plt.savefig('plots/{}_biweekly_monthly_{}_param_ldosa.png'.format(model_type, n))
+plt.savefig('plots/{}_biweekly_monthly_{}_param_rk.png'.format(model_type, n))
 

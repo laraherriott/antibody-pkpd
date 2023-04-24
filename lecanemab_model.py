@@ -91,9 +91,8 @@ class LecanemabModel:
         return dYdt
     
     def AB_PD(self, t, y):
-        dose = DoseFn(self.dose, self.interval, self.final_dose, self.patient)
         C1L = y[0]/self.V1
-        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + dose.eval_at(t)
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dosefn(self.dose, self.dose_list, self.patient, t)
         dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
         dAB_dt = self.Abeta_Kin*(1+self.Abeta_slope*C1L) - self.Abeta_Kout*y[2]
 
@@ -102,9 +101,8 @@ class LecanemabModel:
         return dYdt
     
     def tau_PD(self, t, y):
-        dose = DoseFn(self.dose, self.interval, self.final_dose, self.patient)
         C1L = y[0]/self.V1
-        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + dose.eval_at(t)
+        dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dosefn(self.dose, self.dose_list, self.patient, t)
         dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
         dtau_dt = self.tau_Kin*(1-self.tau_slope*C1L) - self.tau_Kout*y[2]
 

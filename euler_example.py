@@ -141,8 +141,9 @@ plt.legend()
 if model_type == 'suvr':
     plt.ylim((1, 1.4))
     plt.axhline(y=1.17, linestyle='dashed', color = 'black')
+    plt.axvline(x = 10950, linestyle='dashed', color = 'red')
 plt.suptitle("Change in {} over 18 months treatment".format(model_type), y=1.05, fontsize=18)
 plt.title("{} profiles for {} PD parameter samples".format(model_type, n), fontsize=10)
 
-plt.show()
-#plt.savefig('plots/{}_biweekly_monthly_{}_param.png'.format(model_type, n))
+#plt.show()
+plt.savefig('plots/{}_biweekly_monthly_{}_param.png'.format(model_type, n))
