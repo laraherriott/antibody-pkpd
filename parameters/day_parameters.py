@@ -4,10 +4,10 @@
 
 class DayParameters:
     def __init__(self):
-        self.clearance = 0.0181 * 12
+        self.clearance = 0.0181 * 24
         self.volume1 = 3.22
         self.volume2 = 2.19
-        self.inter_compartment = 0.0349 * 12
+        self.inter_compartment = 0.0349 * 24
         self.albumin_clearance = -0.243
         self.sex_clearance = 0.792
         self.weight_clearance = 0.403

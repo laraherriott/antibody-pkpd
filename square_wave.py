@@ -24,7 +24,7 @@ while i < 1.5:
             sol =  ((A/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*i*f)/delta)) + A/2
     y.append(sol)
     t.append(i)
-    i += 0.1
+    i += 0.01
 
 
 plt.plot(t, y)
