@@ -12,8 +12,8 @@ from solution import Solution
 
 #random.seed(1)
 
-n = 1
-model_type = 'tau'
+n = 10
+model_type = 'suvr'
 
 # bi-weekly
 results = pd.DataFrame()
@@ -51,9 +51,9 @@ for i in range(n):
     models = [model_m, model_bw]
     for model in models:
         # Overwrite parameters for this simulation
-        # model.CL = 0.0181 * 24
-        # model.V1 = 3.22
-        # model.V2 = 2.19
+        model.CL = 0.0181
+        model.V1 = 3.22
+        model.V2 = 2.19
         model.baseline_SUVr = 1.38 #sample[0]
         model.SUVr_Kin = sample[1] / (365*24)
         model.SUVr_Kout = model.SUVr_Kin/model.baseline_SUVr
@@ -69,8 +69,8 @@ for i in range(n):
         model.tau_Kin = model.tau_Kout * model.baseline_tau
     # Solve model
 
-    solver_bw = Solution(model_bw, 0, 12960, 1) # 12960 hours = 18 months; 1080 half days
-    solver_m = Solution(model_m, 0, 12960, 1) # 12960 hours = 18 months; 1080 half days
+    solver_bw = Solution(model_bw, 0, (12*1080), 1) # 12960 hours = 18 months; 1080 half days
+    solver_m = Solution(model_m, 0, (12*1080), 1) # 12960 hours = 18 months; 1080 half days
 
     # Save values
 
@@ -118,7 +118,7 @@ results_m["Average"] = total_df_m.median(axis=1)
 results_m["fifth"] = total_df_m.quantile(q=0.05, axis=1)
 results_m["ninety-fifth"] = total_df_m.quantile(q=0.95, axis=1)
 
-results_m.to_csv("output/biweekly_{}_m_param_{}.csv".format(n, model_type), index=False)
+results_m.to_csv("output/monthly_{}_param_{}.csv".format(n, model_type), index=False)
 
 # Visualisation
 
@@ -141,16 +141,19 @@ plt.fill_between(time, fifth_SUVr_m,
                  ninety_fifth_m, 
                  color='blue', alpha=0.2, label = 'percentile 95% CI')
 
-plt.xlabel("Time, hours")
+plt.xlabel("Time, months")
 plt.ylabel(model_type)
+no_months = 18
+xticks = [i*(28*24) for i in range(0, no_months+1, 3)]
+xtick_labels = [i for i in range(0, no_months+1, 3)]
+plt.xticks(xticks, xtick_labels)
 plt.legend()
 if model_type == 'suvr':
     plt.ylim((1, 1.4))
     plt.axhline(y=1.17, linestyle='dashed', color = 'black')
-    plt.axvline(x=10080, linestyle='dashed', color = 'red')
-plt.suptitle("Change in {} over 18 months treatment (RK)".format(model_type), y=1.05, fontsize=18)
-plt.title("{} profiles for {} PD parameter samples (RK)".format(model_type, n), fontsize=10)
+    plt.axvline(x=(24*(28*15)), linestyle='dashed', color = 'red')
+#plt.suptitle("Change in {} over 15 years".format(model_type), y=1.05, fontsize=18)
+plt.title("Change in SUVr over 18 month treatment", fontsize=10)
 
 #plt.show()
-plt.savefig('plots/{}_biweekly_monthly_{}_param_rk.png'.format(model_type, n))
-
+plt.savefig('plots/suvr_biweekly_monthly_{}_param.png'.format(n))

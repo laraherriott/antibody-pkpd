@@ -44,7 +44,7 @@ class Solution:
                                              t_span=[self.t_eval[0], self.t_eval[-1]],
                                              y0=self.y0,
                                              t_eval=self.t_eval,
-                                             max_step = 0.1)
+                                             max_step = 0.5)
 
         #solution = self.euler([self.t_start, self.t_end], self.y0, self.name)
         

@@ -11,7 +11,7 @@ from lecanemab_model import LecanemabModel
 from solution import Solution
 
 #random.seed(1)
-n = 1
+n = 100
 model_type = 'suvr'
 
 # bi-weekly
