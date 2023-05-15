@@ -85,8 +85,9 @@ class LecanemabModel:
         dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dosefn(self.dose, self.dose_list, self.patient, t)
         dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
         dSUVr_dt = self.SUVr_Kin - (y[2] * self.SUVr_Kout * (1 + ((self.Emax * C1L)/(self.SUVr_EC50 + C1L))))
+        nM_cent = ((((y[0] * 70)/1000/3.22)/147181.62))*1e9
 
-        dYdt = [dLcent_dt, dLper_dt, dSUVr_dt]
+        dYdt = [dLcent_dt, dLper_dt, dSUVr_dt, nM_cent]
     
         return dYdt
     
@@ -124,7 +125,7 @@ class LecanemabModel:
         return dYdt
     
     def dosefn(self, dose, dose_list, patient, t):
-        infusion = dose * patient.weight_SUVr
+        infusion = dose * 70 #patient.weight_SUVr
         f = 0.5
         delta = 0.1
 
