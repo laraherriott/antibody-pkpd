@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy
 from lmfit import minimize, Parameters, report_fit
 from scipy.integrate import odeint
+from scipy import stats
 
 # all units in nM/s (I think - but what does it mean when the units are quoted as /s? Am I not supposed to multiply by conc?)
 
@@ -33,20 +34,44 @@ k_off_ma1 = 67.3 * k_onPP
 k_off_ma2 = 1.79 * k_onPD
 k_offPF = 0.12 * k_onPF
 
+dose_list = []
+i = 0
+while i <= (24*100):
+    dose_list.append(int(i))
+    i += (14*24)
+
 # when fitting, many of these values can now roughly be trusted, so should be reasonably tightly constrained
 # the two parameters which really do need to be fitted and are the real 'unknowns' are k_in and k_ADCP
 # note though that in a more complicated model which takes the full synthesis pathway into account k_in could be fitted for separately, as were the aggregation params
 
 params = Parameters()
 params.add('k_in', value=k_in, min=0, max=0.1)
-params.add('k_synth_FcR', value=k_synth_FcR, min=0, max=0.1)
-params.add('k_clear_FcR', value=k_clear_FcR, min=0, max=0.1)
 params.add('k_clear_Abeta', value=k_clear_Abeta, min=0, max=0.1)
 params.add('k_clear_olig', value=k_clear_olig, min=0, max=0.1)
 params.add('k_clear_P', value=k_clear_P, min=0, max=0.1)
-# need to add all params to here and as inputs to ode_model function
+params.add('k_synth_FcR', value=k_synth_FcR, min=0, max=0.1)
+params.add('k_clear_FcR', value=k_clear_FcR, min=0, max=0.1)
+params.add('k_onPP', value=k_onPP, min=0, max=0.1)
+params.add('k_onPD', value=k_onPD, min=0, max=0.1)
+params.add('k_onPF', value=k_onPF, min=0, max=0.1)
+params.add('k_olig_inc', value=k_olig_inc, min=0, max=0.1)
+params.add('k_olig_sep', value=k_olig_sep, min=0, max=0.1)
+params.add('k_plaque_inc', value=k_plaque_inc, min=0, max=0.1)
+params.add('k_plaque_sep', value=k_plaque_sep, min=0, max=0.1)
+params.add('k_ADCP', value=k_ADCP, min=0, max=1)
+params.add('k_mAbcomplex_clear', value=k_mAbcomplex_clear, min=0, max=0.1)
+params.add('k_mAb_transport', value=k_mAb_transport, min=0, max=0.1)
+params.add('k_mAb_transport_back', value=k_mAb_transport_back, min=0, max=0.1)
+params.add('clearance', value=clearance, min=0, max=0.1)
+params.add('k_off_ma0', value=k_off_ma0, min=0, max=0.1, vary=False)
+params.add('k_off_ma1', value=k_off_ma1, min=0, max=0.1, vary=False)
+params.add('k_off_ma2', value=k_off_ma2, min=0, max=0.1, vary=False)
+params.add('k_offPF', value=k_offPF, min=0, max=0.1, vary=False)
 
-def ode_model(y, t, k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR, k_clear_P):
+def ode_model(y, t, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, k_clear_olig, k_synth_FcR, 
+              k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, k_plaque_inc, k_plaque_sep, k_ADCP,
+              k_mAbcomplex_clear, k_mAb_transport, k_mAb_transport_back, clearance, k_off_ma0,
+              k_off_ma1, k_off_ma2, k_offPF):
     
     Abeta = y[0]#/bisf_vol
     Oligomer = y[1]#/bisf_vol
@@ -58,6 +83,7 @@ def ode_model(y, t, k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR,
     Plaque_mAb = y[7]#/bisf_vol
     Oligomer_mAb_FcR = y[8]#/bisf_vol
     Plaque_mAb_FcR = y[9]#/bisf_vol
+    mAb_plasma = y[10]
     
     dABeta = k_in - k_olig_inc*Abeta + k_olig_sep*Oligomer - k_clear_Abeta*Abeta - k_onPP*Abeta*mAb + k_off_ma0*ABeta_mAb 
     dOligomer = k_olig_inc*Abeta - k_olig_sep*Oligomer - k_plaque_inc*Oligomer + k_plaque_sep*Plaque - k_clear_olig*Oligomer - k_onPP*Oligomer*mAb +k_off_ma1*Oligomer_mAb 
@@ -65,8 +91,8 @@ def ode_model(y, t, k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR,
 
     dFcR = k_synth_FcR - k_clear_FcR*FcR - k_onPF*Oligomer_mAb*FcR + k_offPF*Oligomer_mAb_FcR - k_onPF*Plaque_mAb*FcR + k_offPF*Plaque_mAb_FcR + k_ADCP*Oligomer_mAb_FcR + k_ADCP*Plaque_mAb_FcR
     
-    dmAb_plasma = dosefn(dose_list, t) - clearance*mAb_plasma + mAb_transport_back*mAb - mAb_transport*mAb_plasma
-    dmAb = -mAb_transport_back*mAb + mAb_transport*mAb_plasma - k_onPP*Abeta*mAb + k_off_ma0*ABeta_mAb - k_onPP*Oligomer*mAb + k_off_ma1*Oligomer_mAb - k_onPD*Plaque*mAb + k_off_ma2*Plaque_mAb - k_mAbcomplex_clear*mAb
+    dmAb_plasma = dosefn(dose_list, t) - clearance*mAb_plasma + k_mAb_transport_back*mAb - k_mAb_transport*mAb_plasma
+    dmAb = - k_mAb_transport_back*mAb + k_mAb_transport*mAb_plasma - k_onPP*Abeta*mAb + k_off_ma0*ABeta_mAb - k_onPP*Oligomer*mAb + k_off_ma1*Oligomer_mAb - k_onPD*Plaque*mAb + k_off_ma2*Plaque_mAb - k_mAbcomplex_clear*mAb
 
     dABeta_mAb = k_onPP*Abeta*mAb - k_off_ma0*ABeta_mAb - k_mAbcomplex_clear*ABeta_mAb
     dOligomer_mAb = k_onPP*Oligomer*mAb - k_off_ma1*Oligomer_mAb - k_mAbcomplex_clear*Oligomer_mAb + k_offPF*Oligomer_mAb_FcR - k_onPF*Oligomer_mAb*FcR
@@ -75,35 +101,64 @@ def ode_model(y, t, k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR,
     dOligomer_mAb_FcR = k_onPF*Oligomer_mAb*FcR - k_offPF*Oligomer_mAb_FcR - k_ADCP*Oligomer_mAb_FcR
     dPlaque_mAb_FcR = k_onPF*Plaque_mAb*FcR - k_offPF*Plaque_mAb_FcR - k_ADCP*Plaque_mAb_FcR
 
-    dYdt = [dABeta, dOligomer, dPlaque, dFcR, dmAb, dABeta_mAb, dOligomer_mAb, dPlaque_mAb, dOligomer_mAb_FcR, dPlaque_mAb_FcR]
+    dYdt = [dABeta, dOligomer, dPlaque, dFcR, dmAb, dABeta_mAb, dOligomer_mAb, dPlaque_mAb, dOligomer_mAb_FcR, dPlaque_mAb_FcR, dmAb_plasma]
     return dYdt
 
 def ode_solver(t, initial_conditions, params):
-    initAbeta, initOlig, initPlaque, initFcR = initial_conditions # need to add to initial conditions and to parameters being read in
+    initAbeta, initOlig, initPlaque, initFcR, initmAb, initAbetamAb, initOligmAb, initPlaquemAb, initOligmAbFcR, initPlaquemAbFcR = initial_conditions # need to add to initial conditions and to parameters being read in
     k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR, k_clear_P = params['k_in'].value, params['k_clear_Abeta'].value, params['k_clear_olig'].value, params['k_synth_FcR'].value, params['k_clear_FcR'].value, params['k_clear_P'].value
-    res = odeint(ode_model, [initAbeta, initOlig, initPlaque, initFcR], t, args=(k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR, k_clear_P))
+    k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep  = params['k_onPP'].value, params['k_onPD'].value, params['k_onPF'].value, params['k_olig_inc'].value, params['k_olig_sep'].value
+    k_plaque_inc, k_plaque_sep, k_ADCP, k_mAbcomplex_clear, k_mAb_transport = params['k_plaque_inc'].value, params['k_plaque_sep'].value, params['k_ADCP'].value, params['k_mAbcomplex_clear'].value, params['k_mAb_transport'].value
+    k_mAb_transport_back, clearance, k_off_ma0, k_off_ma1, k_off_ma2, k_offPF = params['k_mAb_transport_back'].value, params['clearance'].value, params['k_off_ma0'].value, params['k_off_ma1'].value, params['k_off_ma2'].value, params['k_offPF'].value 
+    res = odeint(ode_model, [initAbeta, initOlig, initPlaque, 
+                             initFcR, initmAb, initAbetamAb, 
+                             initOligmAb, initPlaquemAb, 
+                             initOligmAbFcR, initPlaquemAbFcR], t,
+                             args=(k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, 
+                                   k_clear_FcR, k_clear_P,
+                                   k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, 
+                                   k_plaque_inc, k_plaque_sep, k_ADCP, k_mAbcomplex_clear, 
+                                   k_mAb_transport, k_mAb_transport_back, clearance, 
+                                   k_off_ma0, k_off_ma1, k_off_ma2, k_offPF))
     return res
 #need to develop this function to directly compare plasma mAb to PK profile and to fit for the % reduction in plaque as can be measured from SUVr
 def error(params, initial_conditions, tspan, data):
     sol = ode_solver(tspan, initial_conditions, params)
-    return (sol[:, 0:4] - data).ravel()
+    plaque = sol[:,2] 
+    percentage = [(((plaque[0]-plaque[i])/plaque[0])*100) for i in range(len(plaque))]
+    plasma_mAb = sol[:,10]
+    prediction = zip(percentage, plasma_mAb)
+    return (prediction - data).ravel()
 
-months = 12
-tspan = np.arange(0, (12*28*24*360), 1)
-Abeta = [0.75]*(12*28*24*360)
-Olig = [4.4]*(12*28*24*360)
-Plaque = [39]*(12*28*24*360)
-Receptor = [1]*(12*28*24*360)
-df = pd.DataFrame({'monomer': Abeta,
-                     'oligomer': Olig,
-                     'plaque': Plaque,
-                     'receptor': Receptor
+def dosefn(dose_list, t):
+    infusion = ((((10 * 70)/1000/3.22)/147181.62))*1e9 # nM
+    f = 0.5
+    delta = 0.1
+
+    sol = 0
+    for n in dose_list:
+        if t >=(n-0.5) and t<=(n+1.5):
+            sol =  ((infusion/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*(t-n-0.5)*f)/delta)) + infusion/2
+
+    return sol
+
+tspan = np.arange(0, (24*100*360), 1)
+time = [i*(7*24*360) for i in [53, 79]]
+fall = [67.5, 77.5]
+df1 = pd.DataFrame({'Observed': fall,
+                     'Time': time
                     })
-data = df.values
+
+slope, intercept, r_value, p_value, std_err = stats.linregress(df1['Time'], df1['Observed'])
+
+line = slope*tspan+intercept
+data1 = line
 
 df2 = pd.read_csv('PK_fit_data.csv')
 data2 = df2['PK'].values
 times2 = df2['time'].values
+
+data = zip(data1, data2)
 
 # need to decide what input concentrations to use for each species - could try with these and then also with the values used in the other model (much higher)
 initAbeta = 0.75
@@ -124,3 +179,9 @@ result = minimize(error, params, args=(initial_conditions, tspan, data), method=
 
 print(result.params)
 print(report_fit(result))
+
+plt.figure(2)
+plt.plot(times2, data2, color='r', linestyle='dashed')
+fit = ode_solver(tspan, initmAb, result.params, dose_list)
+plt.plot(tspan, fit, color='b')
+plt.show()
