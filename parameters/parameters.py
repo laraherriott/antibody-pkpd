@@ -73,8 +73,8 @@ class MITParams:
         # brain parameters
 
         
-        # self.k_synth_FcR = 0.000025#*360 # = 0.009000000000000001 vs 0.01086183411851932 fitted
-        # self.k_clear_FcR = 0.000096#*360 # = 0.03456 vs 0.010861834118586933 fitted
+        self.k_synth_FcR = 0.0000503/0.261#*360 # = 0.009000000000000001 vs 0.01086183411851932 fitted
+        self.k_clear_FcR = 0.000193#*360 # = 0.03456 vs 0.010861834118586933 fitted
         self.k_onPD = 0.001#*360
         self.k_onPF = 0.001#*360
         self.k_olig_inc = 0.000015#*360
@@ -88,8 +88,8 @@ class MITParams:
         self.k_oligBrain = 0.0000000148#*360
         self.k_AbetaCSF = 0.000075#*360
         self.k_oligCSF = 0.00000225#*360
-        self.k_ADCP = 0.00000036#*360
-        self.k_offPF = self.k_onPF * 15.6
+        self.k_ADCP = 0.0036#*360
+        self.k_offPF = self.k_onPF * 0.12
 
         # antibody-specific parameters
         # lecanemab
@@ -98,23 +98,38 @@ class MITParams:
         self.k_off_ma2 = 0.00179#*360
 
         # aducanumab
-        # self.k_off_ma0 = 8*360
-        # self.k_off_ma1 = 0.004*360
-        # self.k_off_ma2 = 0.004*360
+        # self.k_off_ma0 = 8#*360
+        # self.k_off_ma1 = 0.004#*360
+        # self.k_off_ma2 = 0.004#*360
+
+        # #"donanemab"/plaque only
+        # self.k_off_ma0 = 0
+        # self.k_off_ma1 = 0
+        # self.k_off_ma2 = 0.0015
+
+        # # oligomer only
+        # self.k_off_ma0 = 0
+        # self.k_off_ma1 = 0.0015
+        # self.k_off_ma2 = 0
+
+        # monomer only
+        # self.k_off_ma0 = 0.0015
+        # self.k_off_ma1 = 0
+        # self.k_off_ma2 = 0
 
         # un-fitted
-        # self.k_in = 0.000055#*360 # = 0.0198 vs 0.004523823527794346 fitted
-        # self.k_clear_Abeta = 0.000055#*360 # 0.0198 = vs 0.00066133270361457 fitted
-        # self.k_clear_olig = 0.000000022#*360 # 0.00000791 = vs 0.000890437909069397 fitted
-        # self.k_clear_P = 0.000000008#*360 # 0.00000288= vs 0.000002817876923133511 fitted
+        self.k_in = 0.000055#*360 # = 0.0198 vs 0.004523823527794346 fitted
+        self.k_clear_Abeta = 0.000055#*360 # 0.0198 = vs 0.00066133270361457 fitted
+        self.k_clear_olig = 0.000000022#*360 # 0.00000791 = vs 0.000890437909069397 fitted
+        self.k_clear_P = 0.00000000441#*360 # 0.00000288= vs 0.000002817876923133511 fitted
 
         # new - fit with restrictions to keep order of magnitude
-        self.k_in = 0.0636#0.000055919 # = 0.0198 vs 0.004523823527794346 fitted
-        self.k_clear_Abeta = 0.0847#0.000059641 # 0.0198 = vs 0.00066133270361457 fitted
-        self.k_clear_olig = 0.0000024734 # 0.00000791 = vs 0.000890437909069397 fitted
-        self.k_clear_P = 0.0000000078274 # 0.00000288= vs 0.000002817876923133511 fitted
-        self.k_synth_FcR = 0.0000983#0.00006131 # = 0.009000000000000001 vs 0.01086183411851932 fitted
-        self.k_clear_FcR = 0.0000983#0.000006131 # = 0.03456 vs 0.010861834118586933 fitted
+        # self.k_in = 0.0636#0.000055919 # = 0.0198 vs 0.004523823527794346 fitted
+        # self.k_clear_Abeta = 0.0847#0.000059641 # 0.0198 = vs 0.00066133270361457 fitted
+        # self.k_clear_olig = 0.0000024734 # 0.00000791 = vs 0.000890437909069397 fitted
+        # self.k_clear_P = 0.0000000078274 # 0.00000288= vs 0.000002817876923133511 fitted
+        # self.k_synth_FcR = 0.0000983#0.00006131 # = 0.009000000000000001 vs 0.01086183411851932 fitted
+        # self.k_clear_FcR = 0.0000983#0.000006131 # = 0.03456 vs 0.010861834118586933 fitted
 
         # fitted but not for FcR for 3 yr:
         # self.k_in = 0.4469159655135057
@@ -154,13 +169,13 @@ class MITParams:
         # self.k_synth_FcR = 0.09999
         # self.k_clear_FcR = 0.09999
         self.k_mAbcomplex_clear = 0.00000015#*360
-        self.mAb_transport = 0.000000025 #* 360 NB this value now slightly increased.
-        self.mAb_transport_back = 0.00000810 #*360
+        self.mAb_transport = 0.0000016 #* 360 NB this value now slightly increased.
+        self.mAb_transport_back = 0.0032 #*360
 
         # fitted to Abeta monomer only?
 
         # fitted to PK value, otherwise clearance =  0.0181 OR 0.00000015*360?
-        self.clearance = 0.00598 /360
+        self.clearance = 0.00000146
         self.volume1 = 3.22
         self.volume2 = 2.19
         self.inter_compartment = 0.0349

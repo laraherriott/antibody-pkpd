@@ -46,7 +46,7 @@ class Solution:
             self.y0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         elif self.model.PD == 'brain':
             self.name = self.model.brain
-            self.y0 = [0.75, 4.4, 39, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            self.y0 = [0.2, 370, 5500, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         elif self.model.PD == 'brain2':
             self.name = self.model.brain
             self.y0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

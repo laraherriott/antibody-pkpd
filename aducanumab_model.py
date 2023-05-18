@@ -38,7 +38,7 @@ class MITModel:
         i = 0
         while i <= (24*365*360*1.5):
             self.dose_list.append(int(i))
-            i += (14*24*360) # lec = 14, adu = 28
+            i += (28*24*360) # lec = 14, adu = 28
 
     def pathway(self, t, y): # y = [APP, BACE, BACEs]
         App = y[0]/self.params.bisf_vol
@@ -81,16 +81,16 @@ class MITModel:
         #Lec_P = y[10]
         #C1L = (((y[10]/1000/self.params.volume1)/147181.62))*1e9 # nM
         
-        dABeta = self.params.k_in - self.params.k_olig_inc*Abeta + self.params.k_olig_sep*Oligomer - self.params.k_onPP*Abeta*mAb + self.params.k_off_ma0*ABeta_mAb - self.params.k_clear_Abeta*Abeta
-        dOligomer = self.params.k_olig_inc*Abeta - self.params.k_olig_sep*Oligomer - self.params.k_plaque_inc*Oligomer + self.params.k_plaque_sep*Plaque - self.params.k_onPP*Oligomer*mAb +self.params.k_off_ma1*Oligomer_mAb - self.params.k_clear_olig*Oligomer
-        dPlaque =  - self.params.k_onPD*Plaque*mAb + self.params.k_off_ma2*Plaque_mAb - self.params.k_clear_P*Plaque + self.params.k_plaque_inc*Oligomer - self.params.k_plaque_sep*Plaque
+        dABeta = self.params.k_in - self.params.k_olig_inc*Abeta + self.params.k_olig_sep*Oligomer + self.params.k_off_ma0*ABeta_mAb - self.params.k_clear_Abeta*Abeta - self.params.k_onPP*Abeta*mAb
+        dOligomer = self.params.k_olig_inc*Abeta - self.params.k_olig_sep*Oligomer - self.params.k_plaque_inc*Oligomer + self.params.k_plaque_sep*Plaque +self.params.k_off_ma1*Oligomer_mAb - self.params.k_clear_olig*Oligomer - self.params.k_onPP*Oligomer*mAb
+        dPlaque =   + self.params.k_off_ma2*Plaque_mAb - self.params.k_clear_P*Plaque + self.params.k_plaque_inc*Oligomer - self.params.k_plaque_sep*Plaque - self.params.k_onPD*Plaque*mAb
 
         dFcR = self.params.k_synth_FcR - self.params.k_clear_FcR*FcR - self.params.k_onPF*Oligomer_mAb*FcR + self.params.k_offPF*Oligomer_mAb_FcR - self.params.k_onPF*Plaque_mAb*FcR + self.params.k_offPF*Plaque_mAb_FcR + self.params.k_ADCP*Plaque_mAb_FcR + self.params.k_ADCP*Oligomer_mAb_FcR
-        dmAb = self.params.mAb_transport*mAb_plasma - self.params.mAb_transport_back*mAb - self.params.k_mAbcomplex_clear*mAb - self.params.k_onPP*Abeta*mAb + self.params.k_off_ma0*ABeta_mAb - self.params.k_onPP*Oligomer*mAb + self.params.k_off_ma1*Oligomer_mAb - self.params.k_onPD*Plaque*mAb + self.params.k_off_ma2*Plaque_mAb
+        dmAb = self.params.mAb_transport*mAb_plasma - self.params.mAb_transport_back*mAb - self.params.k_mAbcomplex_clear*mAb  + self.params.k_off_ma0*ABeta_mAb  + self.params.k_off_ma1*Oligomer_mAb  + self.params.k_off_ma2*Plaque_mAb - self.params.k_onPP*Abeta*mAb - self.params.k_onPP*Oligomer*mAb - self.params.k_onPD*Plaque*mAb
 
-        dABeta_mAb = self.params.k_onPP*Abeta*mAb - self.params.k_off_ma0*ABeta_mAb - self.params.k_mAbcomplex_clear*ABeta_mAb
-        dOligomer_mAb = self.params.k_onPP*Oligomer*mAb - self.params.k_off_ma1*Oligomer_mAb - self.params.k_mAbcomplex_clear*Oligomer_mAb - self.params.k_onPF*Oligomer_mAb*FcR + self.params.k_offPF*Oligomer_mAb_FcR
-        dPlaque_mAb = self.params.k_onPD*Plaque*mAb - self.params.k_off_ma2*Plaque_mAb - self.params.k_onPF*Plaque_mAb*FcR + self.params.k_offPF*Plaque_mAb_FcR
+        dABeta_mAb = - self.params.k_off_ma0*ABeta_mAb - self.params.k_mAbcomplex_clear*ABeta_mAb + self.params.k_onPP*Abeta*mAb
+        dOligomer_mAb = - self.params.k_off_ma1*Oligomer_mAb - self.params.k_mAbcomplex_clear*Oligomer_mAb - self.params.k_onPF*Oligomer_mAb*FcR + self.params.k_offPF*Oligomer_mAb_FcR + self.params.k_onPP*Oligomer*mAb
+        dPlaque_mAb = - self.params.k_off_ma2*Plaque_mAb - self.params.k_onPF*Plaque_mAb*FcR + self.params.k_offPF*Plaque_mAb_FcR + self.params.k_onPD*Plaque*mAb
 
         dOligomer_mAb_FcR = self.params.k_onPF*Oligomer_mAb*FcR - self.params.k_offPF*Oligomer_mAb_FcR - self.params.k_ADCP*Oligomer_mAb_FcR
         dPlaque_mAb_FcR = self.params.k_onPF*Plaque_mAb*FcR - self.params.k_offPF*Plaque_mAb_FcR - self.params.k_ADCP*Plaque_mAb_FcR
