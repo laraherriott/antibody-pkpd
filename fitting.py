@@ -131,20 +131,20 @@ def error(params, initial_conditions, tspan, data):
     return (prediction - data).ravel()
 
 def dosefn(dose_list, t):
-    infusion = ((((10 * 70)/1000/3.22)/147181.62))*1e9 # nM
+    infusion = (((((10 * 70)/1000/3.22)/147181.62))*1e9)/360 # nM
     f = 0.5
     delta = 0.1
 
     sol = 0
     for n in dose_list:
-        if t >=(n-0.5) and t<=(n+1.5):
+        if t >=(n-(0.5*360)) and t<=(n+(1.5*360)):
             sol =  ((infusion/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*(t-n-0.5)*f)/delta)) + infusion/2
 
     return sol
 
-tspan = np.arange(0, (24*100*360), 1)
-time = [i*(7*24*360) for i in [53, 79]]
-fall = [67.5, 77.5]
+tspan = np.arange(0, (24*100*360), 360)
+time = [i*(7*24*360) for i in [0, 53, 79]]
+fall = [0, 67.5, 77.5]
 df1 = pd.DataFrame({'Observed': fall,
                      'Time': time
                     })
