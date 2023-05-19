@@ -104,7 +104,7 @@ def ode_model(t, y, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, k_clear_olig, k
     dYdt = [dABeta, dOligomer, dPlaque, dFcR, dmAb, dABeta_mAb, dOligomer_mAb, dPlaque_mAb, dOligomer_mAb_FcR, dPlaque_mAb_FcR, dmAb_plasma]
     return dYdt
 
-def ode_solver(t, initial_conditions, params, dose_list):
+def ode_solver(t_span, initial_conditions, params, dose_list):
     #initAbeta, initOlig, initPlaque, initFcR, initmAb, initAbetamAb, initOligmAb, initPlaquemAb, initOligmAbFcR, initPlaquemAbFcR, initPlasmamAb = initial_conditions # need to add to initial conditions and to parameters being read in
     k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, k_clear_FcR, k_clear_P = params['k_in'].value, params['k_clear_Abeta'].value, params['k_clear_olig'].value, params['k_synth_FcR'].value, params['k_clear_FcR'].value, params['k_clear_P'].value
     k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep  = params['k_onPP'].value, params['k_onPD'].value, params['k_onPF'].value, params['k_olig_inc'].value, params['k_olig_sep'].value
@@ -118,24 +118,27 @@ def ode_solver(t, initial_conditions, params, dose_list):
     #                                k_mAb_transport, k_mAb_transport_back, clearance, 
     #                                k_off_ma0, k_off_ma1, k_off_ma2, k_offPF, dose_list),
     #                                hmax=0.1)
-    res = scipy.integrate.solve_ivp(fun=lambda t, y: ode_model(t, y, k_in, k_clear_Abeta, k_clear_olig, k_synth_FcR, 
-                                   k_clear_FcR, k_clear_P,
+    res = scipy.integrate.solve_ivp(fun=lambda t, y: ode_model(t, y, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, 
+                                   k_clear_olig, k_synth_FcR,
                                    k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, 
                                    k_plaque_inc, k_plaque_sep, k_ADCP, k_mAbcomplex_clear, 
                                    k_mAb_transport, k_mAb_transport_back, clearance, 
                                    k_off_ma0, k_off_ma1, k_off_ma2, k_offPF, dose_list),
-                                             t_span=[t[0], t[-1]],
+                                             t_span=[t_span[0], t_span[-1]],
                                              y0=initial_conditions,
-                                             t_eval=t)
+                                             t_eval=t_span)
     return res
 #need to develop this function to directly compare plasma mAb to PK profile and to fit for the % reduction in plaque as can be measured from SUVr
 def error(params, initial_conditions, tspan, data, dose_list):
     sol = ode_solver(tspan, initial_conditions, params, dose_list)
-    plaque = sol.y[2] 
+    plaque = [(sol.y[2][i] + sol.y[7][i] + sol.y[9][i]) for i in range(len(sol.y[2]))]
     percentage = [(((plaque[0]-plaque[i])/plaque[0])*100) for i in range(len(plaque))]
+    #print(percentage[-1])
     plasma_mAb = sol.y[10]
     prediction = np.column_stack((percentage, plasma_mAb))
-    return (plasma_mAb - data).ravel()
+    resid1 = plasma_mAb - data[:,1]
+    resid2 = percentage - data[:,0]
+    return np.concatenate((resid1, resid2))
 
 def dosefn(dose_list, t):
     infusion = (((((10 * 70)/1000/3.22)/147181.62))*1e9)/360 # nM
@@ -150,7 +153,7 @@ def dosefn(dose_list, t):
     return sol
 
 def per_iteration(params, iteration, resid, *args, **kws):
-    print('ITER ', iteration, 'RESID ', sum(resid**2))
+    print('ITER ', iteration, 'RESID ', sum(resid**2))#, 'PARAMS ', params)
 
 tspan = np.arange(0, (24*100*360), 360)
 time = [i*(7*24*360) for i in [0, 79]]
@@ -189,7 +192,7 @@ initPlasmamAb = 0
 
 initial_conditions = [initAbeta, initOlig, initPlaque, initFcR, initmAb, initAbetamAb, initOligmAb, initPlaquemAb, initOligmAbFcR, initPlaquemAbFcR, initPlasmamAb]
 count = 0
-result = minimize(error, params, args=(initial_conditions, tspan, data2, dose_list), method='leastsq', iter_cb=per_iteration)#, nan_policy='omit')
+result = minimize(error, params, args=(initial_conditions, tspan, data, dose_list), method='leastsq', iter_cb=per_iteration)#, nan_policy='omit')
 
 
 print(result.params)
@@ -198,5 +201,5 @@ print(report_fit(result))
 plt.figure(2)
 plt.plot(times2, data2, color='r', linestyle='dashed')
 fit = ode_solver(tspan, initial_conditions, result.params, dose_list)
-plt.plot(tspan, fit[:,10], color='b')
+plt.plot(tspan, fit.y[10], color='b')
 plt.show()
