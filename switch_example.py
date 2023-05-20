@@ -13,46 +13,23 @@ from solution import Solution
 #random.seed(1)
 
 n = 1
-model_type = 'tau'
+model_type = 'suvr'
+
+doses = [1+x for x in range(20)]
+
+for dose in doses:
+
+    results = pd.DataFrame()
+    dict_of_cols = {}
+
+    model = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[dose, (28*24), (12*1080)], median_patient=True, param_type='noiiv')
+    model()
 
 
-results_0 = pd.DataFrame()
-dict_of_cols_0 = {}
-results_1 = pd.DataFrame()
-dict_of_cols_1 = {}
-# results_2 = pd.DataFrame()
-# dict_of_cols_2 = {}
-# results_3 = pd.DataFrame()
-# dict_of_cols_3 = {}
-# results_4 = pd.DataFrame()
-# dict_of_cols_4 = {}
-# results_5 = pd.DataFrame()
-# dict_of_cols_5 = {}
+    # order: baseline SUVr, Kin, Emax, EC50; baseline AB, Kout, slope; baseline ptau, Kout, slope
+    sample = [1.34, 0.232, 1.54, 75.0, 0.0842, 0.367, 0.00155, 4.06, 0.468, 0.00313]
 
-model_0 = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[10, (14*24), (12*1080)], median_patient=True, param_type='noiiv')
-model_1 = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[0, (28*2*24), (12*1080)], median_patient=True, param_type='noiiv')
-
-model_0()
-model_1()
-
-# model_2 = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[10, (28*3*24), (12*1080)], median_patient=True, param_type='noiiv')
-# model_3 = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[5, (28*24), (12*1080)], median_patient=True, param_type='noiiv')
-
-# model_2()
-# model_3()
-
-# model_4 = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[5, (28*2*24), (12*1080)], median_patient=True, param_type='noiiv')
-# model_5 = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[2, (28*24), (12*1080)], median_patient=True, param_type='noiiv')
-
-# model_4()
-# model_5()
-
-# order: baseline SUVr, Kin, Emax, EC50; baseline AB, Kout, slope; baseline ptau, Kout, slope
-sample = [1.34, 0.232, 1.54, 75.0, 0.0842, 0.367, 0.00155, 4.06, 0.468, 0.00313]
-
-for i in range(n):
-    models = [model_0, model_1]#, model_2, model_3, model_4, model_5]
-    for model in models:
+    for i in range(n):
         # Overwrite parameters for this simulation
         # model.CL = 0.0181 * 24
         # model.V1 = 3.22
@@ -70,146 +47,35 @@ for i in range(n):
         model.tau_Kout = sample[8] / (365*24)
         model.tau_slope = sample[9]
         model.tau_Kin = model.tau_Kout * model.baseline_tau
-    # Solve model
+        # Solve model
 
-    solver_0 = Solution(model_0, 0, (24*(365*15)), 1)
-    solver_1 = Solution(model_1, 0, (24*(365*15)), 1)
-    # solver_2 = Solution(model_2, 0, (24*(365*15)), 1)
-    # solver_3 = Solution(model_3, 0, (24*(365*15)), 1)
-    # solver_4 = Solution(model_4, 0, (24*(365*15)), 1)
-    # solver_5 = Solution(model_5, 0, (24*(365*15)), 1)
-    # Save values
+        solver = Solution(model, 0, (24*(365*15)), 1)
+
+        # Save values
+
+        solutions = solver.solve()
+
+        if i == 0:
+            time = solutions.t
+            results['time'] = time
+
+        biomarker = solutions.y[2]
+        central_L = solutions.y[0]
+        peripheral_L = solutions.y[1]
+
+        dict_of_cols['{}{}'.format(model_type, i)] = biomarker
 
 
-    solutions_0 = solver_0.solve()
+    # Process data
+    results = pd.concat([results, pd.DataFrame(dict_of_cols)], axis=1)
 
-    if i == 0:
-        time = solutions_0.t
-        results_0['time'] = time
+    total_df = \
+        results[list(results.filter(regex=model_type))]
+    results["Average"] = total_df.median(axis=1)
+    results["fifth"] = total_df.quantile(q=0.05, axis=1)
+    results["ninety-fifth"] = total_df.quantile(q=0.95, axis=1)
 
-    biomarker_0 = solutions_0.y[2]
-    central_L_0 = solutions_0.y[0]
-    peripheral_L_0 = solutions_0.y[1]
-
-    dict_of_cols_0['{}{}'.format(model_type, i)] = biomarker_0
-
-    solutions_1 = solver_1.solve()
-
-    if i == 0:
-        time = solutions_1.t
-        results_1['time'] = time
-
-    biomarker_1 = solutions_1.y[2]
-    central_L_1 = solutions_1.y[0]
-    peripheral_L_1 = solutions_1.y[1]
-
-    dict_of_cols_1['{}{}'.format(model_type, i)] = biomarker_1
-
-    # solutions_2 = solver_2.solve()
-
-    # if i == 0:
-    #     time = solutions_2.t
-    #     results_2['time'] = time
-
-    # biomarker_2 = solutions_2.y[2]
-    # central_L_2 = solutions_2.y[0]
-    # peripheral_L_2 = solutions_2.y[1]
-
-    # dict_of_cols_2['{}{}'.format(model_type, i)] = biomarker_2
-
-    # solutions_3 = solver_3.solve()
-
-    # if i == 0:
-    #     time = solutions_3.t
-    #     results_3['time'] = time
-
-    # biomarker_3 = solutions_3.y[2]
-    # central_L_3 = solutions_3.y[0]
-    # peripheral_L_3 = solutions_3.y[1]
-
-    # dict_of_cols_3['{}{}'.format(model_type, i)] = biomarker_3
-
-    # solutions_4 = solver_4.solve()
-
-    # if i == 0:
-    #     time = solutions_4.t
-    #     results_4['time'] = time
-
-    # biomarker_4 = solutions_4.y[2]
-    # central_L_4 = solutions_4.y[0]
-    # peripheral_L_4 = solutions_4.y[1]
-
-    # dict_of_cols_4['{}{}'.format(model_type, i)] = biomarker_4
-
-    # solutions_5 = solver_5.solve()
-
-    # if i == 0:
-    #     time = solutions_5.t
-    #     results_5['time'] = time
-
-    # biomarker_5 = solutions_5.y[2]
-    # central_L_5 = solutions_5.y[0]
-    # peripheral_L_5 = solutions_5.y[1]
-
-    # dict_of_cols_5['{}{}'.format(model_type, i)] = biomarker_5
-
-# Process data
-results_0 = pd.concat([results_0, pd.DataFrame(dict_of_cols_0)], axis=1)
-results_1 = pd.concat([results_1, pd.DataFrame(dict_of_cols_1)], axis=1)
-
-# results_2 = pd.concat([results_2, pd.DataFrame(dict_of_cols_2)], axis=1)
-# results_3 = pd.concat([results_3, pd.DataFrame(dict_of_cols_3)], axis=1)
-
-# results_4 = pd.concat([results_4, pd.DataFrame(dict_of_cols_4)], axis=1)
-# results_5 = pd.concat([results_5, pd.DataFrame(dict_of_cols_5)], axis=1)
-
-total_df_0 = \
-    results_0[list(results_0.filter(regex=model_type))]
-results_0["Average"] = total_df_0.median(axis=1)
-results_0["fifth"] = total_df_0.quantile(q=0.05, axis=1)
-results_0["ninety-fifth"] = total_df_0.quantile(q=0.95, axis=1)
-
-results_0.to_csv("output/15y_replication/biweekly_{}_15ycont_param_{}.csv".format(n, model_type), index=False)
-
-total_df_1 = \
-    results_1[list(results_1.filter(regex=model_type))]
-results_1["Average"] = total_df_1.median(axis=1)
-results_1["fifth"] = total_df_1.quantile(q=0.05, axis=1)
-results_1["ninety-fifth"] = total_df_1.quantile(q=0.95, axis=1)
-
-results_1.to_csv("output/15y_replication/biweekly_{}_15y_off_param_{}.csv".format(n, model_type), index=False)
-
-# total_df_2 = \
-#     results_2[list(results_2.filter(regex=model_type))]
-# results_2["Average"] = total_df_2.median(axis=1)
-# results_2["fifth"] = total_df_2.quantile(q=0.05, axis=1)
-# results_2["ninety-fifth"] = total_df_2.quantile(q=0.95, axis=1)
-
-# results_2.to_csv("output/mid3_biweekly_{}_15y_param_{}.csv".format(n, model_type), index=False)
-
-# total_df_3 = \
-#     results_3[list(results_3.filter(regex=model_type))]
-# results_3["Average"] = total_df_3.median(axis=1)
-# results_3["fifth"] = total_df_3.quantile(q=0.05, axis=1)
-# results_3["ninety-fifth"] = total_df_3.quantile(q=0.95, axis=1)
-
-# results_3.to_csv("output/mid4_biweekly_{}_15y_param_{}.csv".format(n, model_type), index=False)
-
-# total_df_4 = \
-#     results_4[list(results_4.filter(regex=model_type))]
-# results_4["Average"] = total_df_4.median(axis=1)
-# results_4["fifth"] = total_df_4.quantile(q=0.05, axis=1)
-# results_4["ninety-fifth"] = total_df_4.quantile(q=0.95, axis=1)
-
-# results_4.to_csv("output/mid5_biweekly_{}_15y_param_{}.csv".format(n, model_type), index=False)
-
-# total_df_5 = \
-#     results_5[list(results_5.filter(regex=model_type))]
-# results_5["Average"] = total_df_5.median(axis=1)
-# results_5["fifth"] = total_df_5.quantile(q=0.05, axis=1)
-# results_5["ninety-fifth"] = total_df_5.quantile(q=0.95, axis=1)
-
-# results_5.to_csv("output/mid6_biweekly_{}_15y_param_{}.csv".format(n, model_type), index=False)
+    results.to_csv("output/15y_monthly/{}mg_{}_15ycont_param_{}.csv".format(dose, model_type, n), index=False)
 
 # results = pd.read_csv('output/biweekly_1_15y_off_param_suvr.csv')
 # results_m = pd.read_csv('output/biweekly_1_15ycont_param_suvr.csv')
