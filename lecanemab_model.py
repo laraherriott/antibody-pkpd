@@ -84,10 +84,10 @@ class LecanemabModel:
         C1L = y[0]/self.V1
         dLcent_dt = (self.Q/self.V2)*y[1] - ((self.Q/self.V1) + (self.CL/self.V1))*y[0] + self.dosefn(self.dose, self.dose_list, self.patient, t)
         dLper_dt = (self.Q/self.V1)*y[0] - (self.Q/self.V2)*y[1]
-        dSUVr_dt = self.SUVr_Kin - (y[2] * self.SUVr_Kout * (1 + ((self.Emax * C1L)/(self.SUVr_EC50 + C1L))))
-        nM_cent = ((((y[0] * 70)/1000/3.22)/147181.62))*1e9
+        # dSUVr_dt = self.SUVr_Kin - (y[2] * self.SUVr_Kout * (1 + ((self.Emax * C1L)/(self.SUVr_EC50 + C1L))))
+        # nM_cent = ((((y[0] * 70)/1000/3.22)/147181.62))*1e9
 
-        dYdt = [dLcent_dt, dLper_dt, dSUVr_dt, nM_cent]
+        dYdt = [dLcent_dt, dLper_dt]#, dSUVr_dt, nM_cent]
     
         return dYdt
     
@@ -125,13 +125,13 @@ class LecanemabModel:
         return dYdt
     
     def dosefn(self, dose, dose_list, patient, t):
-        infusion = dose * 70 #patient.weight_SUVr
+        infusion = (dose * 70)/360 #patient.weight_SUVr
         f = 0.5
         delta = 0.1
 
         sol = 0
         for n in dose_list:
-            if t >=(n-0.5) and t<=(n+1.5):
+            if t >=(n-(0.5*360)) and t<=(n+(1.5*360)):
                 sol =  ((infusion/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*(t-n-0.5)*f)/delta)) + infusion/2
 
         return sol
@@ -233,13 +233,13 @@ class Pharmacokinetic:
         return f0 + f1*math.sin(t/0.1)
     
     def dosefn(self, dose, dose_list, patient, t):
-        infusion = dose * patient.weight_SUVr
+        infusion = (dose * patient.weight_SUVr)/360
         f = 0.5
         delta = 0.1
 
         sol = 0
         for n in dose_list:
-            if t >=(n-0.5) and t<=(n+1.5):
+            if t >=(n-(0.5*360)) and t<=(n+(1.5*360)):
                 sol =  ((infusion/2)/math.atan(1/delta))*(math.atan(math.sin(2*math.pi*(t-n-0.5)*f)/delta)) + infusion/2
 
         return sol

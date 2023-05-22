@@ -7,6 +7,7 @@ import pandas as pd
 import scipy
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 from aducanumab_model import MITModel
 from antibodies_model import AbModel
@@ -19,7 +20,7 @@ from solution import Solution
 # over_80_single_no_prev = over_80[over_80['model'] == 'pf_one_negative']
 
 # spline = CubicSpline(over_80_single_no_prev['time'], over_80_single_no_prev['prediction'])
-
+startTime = datetime.now()
 random.seed(1)
 
 #pathway = MITModel('adu_path')
@@ -28,10 +29,12 @@ model = MITModel('brain')
 #model()
 
 # solver2 = Solution(pathway, 0, 31536000, 1)
-solver = Solution(model, 0, int(24*360*100), 360)
+solver = Solution(model, 0, int(24*360*364*1.5), 360)
 
 solutions= solver.solve()
 # solutions2 = solver2.solve()
+
+print(datetime.now() - startTime)
 
 monomer = solutions.y[0]
 oligomer = solutions.y[1]
@@ -83,9 +86,11 @@ for i in range(len(antibody)):
     mon_add = monomer[i] + mon_ab[i]
     mon_total.append(mon_add)
 
+
 print(plaque_total[0], plaque_total[-1])
-per_dec = ((plaque[0]-plaque[-1])/plaque[0])*100
+per_dec = ((plaque_total[0]-plaque_total[-1])/plaque_total[0])*100
 print(per_dec)
+
 
 # ab_1 = []
 # ab_2= []
@@ -108,7 +113,7 @@ plt.legend()
 plt.xlabel("Time, months")
 plt.ylabel("Species, nM")
 plt.title("Change in species over 18 months lecanemab treatment")
-plt.show()
+#plt.show()
 #fig1.savefig('detailed_model/per_second/noAb_species_adcp_0000036.png')
 
 fig2 = plt.figure(2)
@@ -121,7 +126,7 @@ plt.xticks(xticks, xtick_labels)
 plt.xlabel("Time, months")
 plt.ylabel("Species, nM")
 plt.title("Change in free lecanemab concentration in brain")
-plt.show()
+#plt.show()
 #fig2.savefig('detailed_model/per_second/noAb_brain_ab_adcp_0000036.png')
 
 fig3 = plt.figure(3)
@@ -149,7 +154,7 @@ plt.legend()
 plt.xlabel("Time, months")
 plt.ylabel("Complex, nM")
 plt.title("Change in antibody-species complex concentrations")
-plt.show()
+#plt.show()
 #fig4.savefig('detailed_model/per_second/noAb_species_ab_adcp_0000036.png')
 
 fig5 = plt.figure(5)
@@ -163,7 +168,7 @@ plt.legend()
 plt.xlabel("Time, months")
 plt.ylabel("Comples, nM")
 plt.title("Change in receptor-bound complex concentration")
-plt.show()
+#plt.show()
 #fig5.savefig('detailed_model/per_second/noAb_species_ab_FcR_adcp_0000036.png')
 
 fig6 = plt.figure(6)
@@ -176,7 +181,7 @@ plt.xlabel("Time, months")
 plt.ylabel("Species, nM")
 plt.title("Change in FcR concentration")
 plt.legend()
-plt.show()
+#plt.show()
 #fig6.savefig('detailed_model/per_second/noAb_receptor_adcp_0000036.png')
 
 fig7 = plt.figure(7)
@@ -202,7 +207,7 @@ plt.xticks(xticks, xtick_labels)
 plt.title('Brain lecanemab concentration as a percentage of plasma concentration')
 plt.xlabel("Time, months")
 plt.ylabel("Brain lecanemab/plasma lecanemab, %")
-plt.show()
+#plt.show()
 #fig8.savefig('detailed_model/per_second/noAb_percent_brainAb_adcp_0000036.png')
 
 fig9 = plt.figure(9)
@@ -231,10 +236,10 @@ plt.xticks(xticks, xtick_labels)
 plt.xlabel("Time, months")
 plt.ylabel("Phagocytosed plaque, nM")
 plt.title('Cumulative amount of plaque consumed by phagocytosis')
-plt.show()
+#plt.show()
 #fig10.savefig('detailed_model/per_second/noAb_phagocytosedPlaque_adcp_0000036.png')
 
 fig11 = plt.figure(11)
 plt.plot(time, new_agg, label = 'Total plaque aggregating')
-plt.show()
+#plt.show()
 # fig11.savefig('detailed_model/aggregating_plaque_adcp_000036_old.png')

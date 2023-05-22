@@ -38,7 +38,7 @@ class MITModel:
         i = 0
         while i <= (24*365*360*1.5):
             self.dose_list.append(int(i))
-            i += (28*24*360) # lec = 14, adu = 28
+            i += (14*24*360) # lec = 14, adu = 28
 
     def pathway(self, t, y): # y = [APP, BACE, BACEs]
         App = y[0]/self.params.bisf_vol
