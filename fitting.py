@@ -6,6 +6,9 @@ import scipy
 from lmfit import minimize, Parameters, report_fit
 from scipy.integrate import odeint
 from scipy import stats
+from datetime import datetime
+
+startTime = datetime.now()
 
 # all units in nM/s (I think - but what does it mean when the units are quoted as /s? Am I not supposed to multiply by conc?)
 
@@ -26,7 +29,7 @@ k_ADCP = 0.0036 # fitted to SUVr
 k_mAbcomplex_clear = 0.00000015
 k_mAb_transport = 0.0000016 # fitted to aducanumab CSF PK
 k_mAb_transport_back = 0.0032 # fitted to aducanumab CSF PK
-clearance = 0.00000146 # fitted to aducanumab PK
+clearance = 0.00003 #0.00000146 # fitted to aducanumab PK
 
 # lecanemab
 k_off_ma0 = 2290 * k_onPP
@@ -34,18 +37,52 @@ k_off_ma1 = 67.3 * k_onPP
 k_off_ma2 = 1.79 * k_onPD
 k_offPF = 0.12 * k_onPF
 
+
+# k_in = 0.000055847
+# k_clear_Abeta = 0.000049976
+# k_clear_olig = 0.00000022805
+# k_clear_P = 0.00000000081594
+# k_synth_FcR = 0.00019348
+# k_clear_FcR = 0.00018406
+# k_onPP = 0.001 # fixed
+# k_onPD = 0.001 # fixed
+# k_onPF = 0.001 # fixed
+# k_olig_inc = 0.000019116
+# k_olig_sep = 0.000000036912
+# k_plaque_inc = 0.00000068749
+# k_plaque_sep = 0.00000028384
+# k_ADCP = 0.00345334
+# k_mAbcomplex_clear = 0.00000014504
+# k_mAb_transport = 0.0000036971
+# k_mAb_transport_back = 0.00318675
+# clearance = 0.000010651
+
 dose_list = []
 i = 0
-while i <= (24*100*360):
+while i <= (24*56*360):
     dose_list.append(int(i))
     i += (14*24*360)
+
+initAbeta = 0.2
+initOlig = 370
+initPlaque = 5500
+initFcR = 1
+initmAb = 0
+initAbetamAb = 0
+initOligmAb = 0
+initPlaquemAb = 0
+initOligmAbFcR = 0
+initPlaquemAbFcR = 0
+initPlasmamAb = 0
+
+initial_conditions = [initAbeta, initOlig, initPlaque, initFcR, initmAb, initAbetamAb, initOligmAb, initPlaquemAb, initOligmAbFcR, initPlaquemAbFcR, initPlasmamAb]
 
 # when fitting, many of these values can now roughly be trusted, so should be reasonably tightly constrained
 # the two parameters which really do need to be fitted and are the real 'unknowns' are k_in and k_ADCP
 # note though that in a more complicated model which takes the full synthesis pathway into account k_in could be fitted for separately, as were the aggregation params
 
 params = Parameters()
-params.add('k_in', value=k_in, min=0, max=0.1)
+params.add('k_in', value=k_in+1e6, min=0, max=0.1)
 params.add('k_clear_Abeta', value=k_clear_Abeta, min=0, max=0.1)
 params.add('k_clear_olig', value=k_clear_olig, min=0, max=0.1)
 params.add('k_clear_P', value=k_clear_P, min=0, max=0.1)
@@ -57,9 +94,9 @@ params.add('k_onPF', value=k_onPF, vary=False)#, min=0, max=0.1)
 params.add('k_olig_inc', value=k_olig_inc, min=0, max=0.1)
 params.add('k_olig_sep', value=k_olig_sep, min=0, max=0.1)
 params.add('k_plaque_inc', value=k_plaque_inc, min=0, max=0.1)
-params.add('k_plaque_sep', value=k_plaque_sep, min=0, max=0.1)
+params.add('k_plaque_sep', value=k_plaque_sep+1e12, min=0, max=0.1)
 params.add('k_ADCP', value=k_ADCP, min=0, max=1)
-params.add('k_mAbcomplex_clear', value=k_mAbcomplex_clear, min=0, max=0.1)
+params.add('k_mAbcomplex_clear', value=k_mAbcomplex_clear+1e8, min=0, max=0.1)
 params.add('k_mAb_transport', value=k_mAb_transport, min=0, max=0.1)
 params.add('k_mAb_transport_back', value=k_mAb_transport_back, min=0, max=0.1)
 params.add('clearance', value=clearance, min=0, max=1)
@@ -67,6 +104,29 @@ params.add('k_off_ma0', value=k_off_ma0, vary=False)
 params.add('k_off_ma1', value=k_off_ma1, vary=False)
 params.add('k_off_ma2', value=k_off_ma2, vary=False)
 params.add('k_offPF', value=k_offPF, vary=False)
+
+# params.add('k_in', value=k_in, min=0, max=0.1)
+# params.add('k_clear_Abeta', value=k_clear_Abeta, min=0, max=0.1)
+# params.add('k_clear_olig', value=k_clear_olig, min=0, max=0.1)
+# params.add('k_clear_P', value=k_clear_P, min=0, max=0.1)
+# params.add('k_synth_FcR', value=k_synth_FcR, vary=False)#min=0, max=0.1)
+# params.add('k_clear_FcR', value=k_clear_FcR, vary=False)#, min=0, max=0.1)
+# params.add('k_onPP', value=k_onPP, vary=False)#, min=0, max=0.1)
+# params.add('k_onPD', value=k_onPD, vary=False)#, min=0, max=0.1)
+# params.add('k_onPF', value=k_onPF, vary=False)#, min=0, max=0.1)
+# params.add('k_olig_inc', value=k_olig_inc, min=0, max=0.1)
+# params.add('k_olig_sep', value=k_olig_sep, min=0, max=0.1)
+# params.add('k_plaque_inc', value=k_plaque_inc, min=0, max=0.1)
+# params.add('k_plaque_sep', value=k_plaque_sep, min=0, max=0.1)
+# params.add('k_ADCP', value=k_ADCP, vary=False)#, min=0, max=1)
+# params.add('k_mAbcomplex_clear', value=k_mAbcomplex_clear, vary=False)#, min=0, max=0.1)
+# params.add('k_mAb_transport', value=k_mAb_transport, vary=False)#, min=0, max=0.1)
+# params.add('k_mAb_transport_back', value=k_mAb_transport_back, vary=False)#, min=0, max=0.1)
+# params.add('clearance', value=clearance, vary=False)#, min=0, max=1)
+# params.add('k_off_ma0', value=k_off_ma0, vary=False)
+# params.add('k_off_ma1', value=k_off_ma1, vary=False)
+# params.add('k_off_ma2', value=k_off_ma2, vary=False)
+# params.add('k_offPF', value=k_offPF, vary=False)
 
 def ode_model(t, y, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, k_clear_olig, k_synth_FcR, 
               k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, k_plaque_inc, k_plaque_sep, k_ADCP,
@@ -128,6 +188,21 @@ def ode_solver(t_span, initial_conditions, params, dose_list):
                                              y0=initial_conditions,
                                              t_eval=t_span)
     return res
+
+def initial_solver(t_span, initial_conditions, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, 
+                   k_clear_olig, k_synth_FcR, k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, 
+                   k_plaque_inc, k_plaque_sep, k_ADCP, k_mAbcomplex_clear, k_mAb_transport, k_mAb_transport_back, clearance, 
+                   k_off_ma0, k_off_ma1, k_off_ma2, k_offPF, dose_list):
+    res = scipy.integrate.solve_ivp(fun=lambda t, y: ode_model(t, y, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, 
+                                   k_clear_olig, k_synth_FcR,
+                                   k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, 
+                                   k_plaque_inc, k_plaque_sep, k_ADCP, k_mAbcomplex_clear, 
+                                   k_mAb_transport, k_mAb_transport_back, clearance, 
+                                   k_off_ma0, k_off_ma1, k_off_ma2, k_offPF, dose_list),
+                                             t_span=[t_span[0], t_span[-1]],
+                                             y0=initial_conditions,
+                                             t_eval=t_span)
+    return res
 #need to develop this function to directly compare plasma mAb to PK profile and to fit for the % reduction in plaque as can be measured from SUVr
 def error(params, initial_conditions, tspan, data, dose_list):
     sol = ode_solver(tspan, initial_conditions, params, dose_list)
@@ -135,10 +210,13 @@ def error(params, initial_conditions, tspan, data, dose_list):
     percentage = [(((plaque[0]-plaque[i])/plaque[0])*100) for i in range(len(plaque))]
     #print(percentage[-1])
     plasma_mAb = sol.y[10]
+    #print(len(plaque), len(plasma_mAb))
     prediction = np.column_stack((percentage, plasma_mAb))
-    resid1 = plasma_mAb - data[:,1]
-    resid2 = percentage - data[:,0]
-    return np.concatenate((resid1, resid2))
+    plaque_per_day = [plaque[i*24] for i in range(56)]
+    mAb_per_day = [plasma_mAb[i*24] for i in range(56)]
+    resid1 = mAb_per_day - data[:,1]
+    resid2 = plaque_per_day - data[:,0]
+    return np.concatenate((resid1, resid2)) #(data-sol.y[2])
 
 def dosefn(dose_list, t):
     infusion = (((((10 * 70)/1000/3.22)/147181.62))*1e9)/360 # nM
@@ -153,9 +231,9 @@ def dosefn(dose_list, t):
     return sol
 
 def per_iteration(params, iteration, resid, *args, **kws):
-    print('ITER ', iteration, 'RESID ', sum(resid**2))#, 'PARAMS ', params)
+    print('ITER ', iteration, 'RESID ', sum(resid**2))
 
-tspan = np.arange(0, (24*100*360), 360)
+tspan = np.arange(0, (24*56*360), 360)
 time = [i*(7*24*360) for i in [0, 79]]
 fall = [0, 77.5]
 df1 = pd.DataFrame({'Observed': fall,
@@ -165,11 +243,42 @@ df1 = pd.DataFrame({'Observed': fall,
 slope, intercept, r_value, p_value, std_err = stats.linregress(df1['Time'], df1['Observed'])
 
 line = slope*tspan+intercept
-data1 = line
+
+data1 = []
+for i in range(len(line)):
+    if i == 0:
+        data1.append(5500)
+    else:
+        fall_percent = line[i]
+        fall_value = data1[i-1]*(fall_percent/100)
+        data1.append(5500-fall_value)
 df2 = pd.read_csv('PK_fit_data.csv')
 data2 = df2['PK'].values
 times2 = df2['time'].values
-data = np.column_stack((data1, data2))
+#data = np.column_stack((data1, data2))
+
+data3 = [5500]*len(tspan)
+
+# simulated data
+tspan2 = np.arange(0, (24*56*360), (360*24)) # one data point per day
+solution  = initial_solver(tspan2, initial_conditions, k_in, k_clear_Abeta, k_clear_FcR, k_clear_P, 
+                   k_clear_olig, k_synth_FcR, k_onPP, k_onPD, k_onPF, k_olig_inc, k_olig_sep, 
+                   k_plaque_inc, k_plaque_sep, k_ADCP, k_mAbcomplex_clear, k_mAb_transport, k_mAb_transport_back, clearance, 
+                   k_off_ma0, k_off_ma1, k_off_ma2, k_offPF, dose_list)
+
+plaque = [(solution.y[2][i] + solution.y[7][i] + solution.y[9][i]) for i in range(len(solution.y[2]))]
+antibody = solution.y[10]
+print(len(plaque), len(antibody))
+plaque_with_noise = [x + np.random.normal(0,1,1) for x in plaque]
+antibody_with_noise = [y + np.random.normal(0,1,1) for y in antibody]
+
+# plt.plot(tspan, with_noise)
+# plt.show()
+
+# data = np.column_stack((data1, data2))
+data = np.column_stack((plaque_with_noise, antibody_with_noise))
+
+print('Initial run complete after ', (datetime.now()-startTime))
 
 # plt.plot(times2, data2)
 # plt.show()
@@ -178,28 +287,16 @@ data = np.column_stack((data1, data2))
 # plt.show()
 
 # need to decide what input concentrations to use for each species - could try with these and then also with the values used in the other model (much higher)
-initAbeta = 0.2
-initOlig = 370
-initPlaque = 5500
-initFcR = 1
-initmAb = 0
-initAbetamAb = 0
-initOligmAb = 0
-initPlaquemAb = 0
-initOligmAbFcR = 0
-initPlaquemAbFcR = 0
-initPlasmamAb = 0
 
-initial_conditions = [initAbeta, initOlig, initPlaque, initFcR, initmAb, initAbetamAb, initOligmAb, initPlaquemAb, initOligmAbFcR, initPlaquemAbFcR, initPlasmamAb]
-count = 0
 result = minimize(error, params, args=(initial_conditions, tspan, data, dose_list), method='leastsq', iter_cb=per_iteration)#, nan_policy='omit')
 
 
-print(result.params)
-print(report_fit(result))
+with open("output.txt", "a") as f:
+    print(result.params, file=f)
+    print(report_fit(result), file=f)
 
-plt.figure(2)
-plt.plot(times2, data2, color='r', linestyle='dashed')
-fit = ode_solver(tspan, initial_conditions, result.params, dose_list)
-plt.plot(tspan, fit.y[10], color='b')
-plt.show()
+# plt.figure(2)
+# plt.plot(times2, data2, color='r', linestyle='dashed')
+# fit = ode_solver(tspan, initial_conditions, result.params, dose_list)
+# plt.plot(tspan, fit.y[10], color='b')
+# plt.show()
