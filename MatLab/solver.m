@@ -1,5 +1,5 @@
 % Parameters
-k_in = 5.5-5;
+k_in = 5.5e-5;
 k_olig_inc = 0.000015;
 k_olig_sep = 1.4e-8;
 k_clear_Abeta = 5.5e-5;
@@ -41,7 +41,7 @@ initOligmAbFcR = 0;
 initPlaquemAbFcR = 0;
 initPlasmamAb = 0;
 
-initial_conditions = [initAbeta; initOlig; initPlaque; initFcR; initmAb; initAbetamAb; initOligmAb; initPlaquemAb; initOligmAbFcR; initPlaquemAbFcR; initPlasmamAb];
+initial_conditions = [initAbeta; initOlig; initPlaque; initFcR; initPlasmamAb; initmAb; initAbetamAb; initOligmAb; initPlaquemAb; initOligmAbFcR; initPlaquemAbFcR];
 
 [t,y] = ode45(@(t,y) ODEs(t, y, k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, ...
     k_onPP, k_off_ma0, k_off_ma1, k_plaque_inc, k_plaque_sep, k_clear_olig, ...
