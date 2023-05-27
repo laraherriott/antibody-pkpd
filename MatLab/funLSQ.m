@@ -35,36 +35,35 @@ initPlaquemAbFcR = 0;
 initPlasmamAb = 0;
 
 initial_conditions = [initAbeta; initOlig; initPlaque; initFcR; initmAb; initAbetamAb; initOligmAb; initPlaquemAb; initOligmAbFcR; initPlaquemAbFcR; initPlasmamAb];
-
-[t,y] = ode45(@(t,y) ODEs(t, y, k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, ...
+options=odeset('MaxStep',0.1);
+[t,y] = ode15s(@(t,y) ODEs(t, y, k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, ...
     k_onPP, k_off_ma0, k_off_ma1, k_plaque_inc, k_plaque_sep, k_clear_olig, ...
     k_clear_P, k_onPD, k_off_ma2, k_synth_FcR, k_clear_FcR, k_onPF, k_offPF, ...
     k_ADCP, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear, ...
-    dose_list),tspan,initial_conditions);
+    dose_list),tspan,initial_conditions, options);
 
 plaque = y(:,3)+y(:,9)+y(:,11);
 plaque_initial = plaque(1);
-plaque_fall = zeros(length(plaque));
+plaque_fall = zeros(length(plaque)-1,1);
 
-for i = (1:1:length(plaque))
-    plaque_fall(i) = ((plaque_initial-plaque(i))/plaque_initial)*100;
+for i = (1:1:length(plaque)-1)
+    plaque_fall(i,1) = ((plaque_initial-plaque(i))/plaque_initial)*100;
 end
 
-plaque_change = zeros(length(plaque));
-plaque_change(53*7) = plaque_fall((53*7));
-plaque_change(end) = plaque_fall(end);
+plaque_change = zeros(length(plaque)-1,1);
+plaque_change(53*7,1) = plaque_fall(53*7,1);
+plaque_change(end,1) = plaque_fall(end,1);
 plaque_error = plaque_change - y_observed(:,1);
 
-ab = zeros(length(plaque));
+ab = zeros(length(plaque)-1,1);
 
-for i = (1:1:length(plaque))
+for i = (1:1:length(plaque)-1)
     if i <= 100
-        ab(i) = y(i,5);
+        ab(i,1) = y(i,5);
     end
 end
 
 ab_error = ab - y_observed(:,2);
-
 err=plaque_error+ab_error;
 end
 

@@ -54,21 +54,22 @@ k_mAbcomplex_clear = 1.5e-7*360;
 % noise = scale*randn(n_observations, 1);
 % y_observed = y(:,3) + noise;
 
-plaque_observed = zeros(364*1.5);
-plaque_observed(53*7) = 67.5;
-plaque_observed(end) = 77.5; 
+
 ab = csvread('../PK_fit_data.csv', 1, 1);
-ab_observed = zeros(364*1.5);
+plaque_observed = zeros([364*1.5 1]);
+plaque_observed(53*7, 1) = 67.5;
+plaque_observed(end, 1) = 77.5; 
+ab_observed = zeros([364*1.5 1]);
 for i = (1:1:length(ab_observed))
     count=0;
     if i <= 100
-        ab_observed(i) = ab(i*24,1);
+        ab_observed(i, 1) = ab(i*24,1);
     end
 end
 
-y_observed = [plaque_observed; ab_observed];
+y_observed = [plaque_observed, ab_observed];
 
 initial_estimate = [k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_ADCP, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear];
-lb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+lb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 lsq = lsqnonlin(@(p)funLSQ(p, y_observed, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2), initial_estimate, lb)
