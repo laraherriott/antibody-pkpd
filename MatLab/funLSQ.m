@@ -1,19 +1,19 @@
-function err=funLSQ(p, y_observed, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear)
+function err=funLSQ(p, y_observed, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2)
 k_in = p(1);
-% k_olig_inc = p(2);
-% k_olig_sep = p(3);
-% k_clear_Abeta = p(4);
-% k_plaque_inc = p(5);
-% k_plaque_sep = p(6);
-% k_clear_olig = p(7);
-% k_clear_P = p(8);
-% k_synth_FcR = p(9);
-% k_clear_FcR = p(10);
-k_ADCP = p(2);
-clearance = p(3);
-% k_mAb_transport_back = p(2);
-% k_mAb_transport = p(3);
-% k_mAbcomplex_clear = p(4);
+k_olig_inc = p(2);
+k_olig_sep = p(3);
+k_clear_Abeta = p(4);
+k_plaque_inc = p(5);
+k_plaque_sep = p(6);
+k_clear_olig = p(7);
+k_clear_P = p(8);
+k_synth_FcR = p(9);
+k_clear_FcR = p(10);
+k_ADCP = p(11);
+clearance = p(12);
+k_mAb_transport_back = p(13);
+k_mAb_transport = p(14);
+k_mAbcomplex_clear = p(15);
 
 % Time range
 tspan = 0:24:(364*24*1.5);

@@ -4,18 +4,18 @@ k_olig_inc = 0.000015*360;
 k_olig_sep = 1.4e-8*360;
 k_clear_Abeta = 5.5e-5*360;
 k_onPP = 0.001*360;
-k_off_ma0 = 2290*k_onPP*360;
-k_off_ma1 = 67.3*k_onPP*360;
+k_off_ma0 = 2290*k_onPP;
+k_off_ma1 = 67.3*k_onPP;
 k_plaque_inc = 7e-8*360;
 k_plaque_sep = 7e-11*360;
 k_clear_olig = 2.2e-8*360;
 k_clear_P = 4.41e-9*360;
 k_onPD = 0.001*360;
-k_off_ma2 = 1.79*k_onPD*360;
+k_off_ma2 = 1.79*k_onPD;
 k_synth_FcR = (0.0000503/0.261)*360;
 k_clear_FcR = 0.000193*360;
 k_onPF = 0.001*360;
-k_offPF = 0.12*k_onPF*360;
+k_offPF = 0.12*k_onPF;
 k_ADCP = 0.0036*360;
 clearance = 1.1e-5*360;
 k_mAb_transport_back = 0.0032*360;
@@ -91,32 +91,32 @@ for i = (1:1:length(ab_observed))
 
 end
 
-ab_decay = csvread('../../lec_decay_one_dose.csv',1,0);
-ab_d_obs = zeros([364*1.5 1]);
-count=1;
-for i = (1:1:length(ab_d_obs))
-    if ismember(i, ab_decay(:,1))
-        ab_d_obs(i, 1) = ab_decay(count,2);
-        count = count + 1;
-    end
-
-end
+% ab_decay = csvread('../../lec_decay_one_dose.csv',1,0);
+% ab_d_obs = zeros([364*1.5 1]);
+% count=1;
+% for i = (1:1:length(ab_d_obs))
+%     if ismember(i, ab_decay(:,1))
+%         ab_d_obs(i, 1) = ab_decay(count,2);
+%         count = count + 1;
+%     end
+% 
+% end
 
 y_observed = [plaque_observed, ab_observed];
-y_observed2 = ab_d_obs;
+%y_observed2 = ab_d_obs;
 
-initial_estimate = [k_in, k_ADCP, clearance];
-lb = [0, 0, 0];%, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-ub = [1e-3, 10, 1e-4];%[1e-4, 0.01, 1e-5, 1e-6];
+initial_estimate = [k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_ADCP, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear];
+lb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+ub = [0.1, 0.1, 1e-4, 0.1, 1e-4, 1e-6, 1e-4, 1e-4, 1, 1, 10, 1e-3, 10, 1e-3, 1e-4];%[1e-4, 0.01, 1e-5, 1e-6];
 
-options = optimoptions('lsqnonlin', 'OptimalityTolerance',1e-20);
+options = optimoptions('lsqnonlin', 'OptimalityTolerance',1e-8);
 
-%[xlsqnonlin, errorlsqnonlin]  = lsqnonlin(@(p)funLSQ(p, y_observed,  k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear), initial_estimate, lb, [], options)
+[xlsqnonlin, errorlsqnonlin]  = lsqnonlin(@(p)funLSQ(p, y_observed,  k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2), initial_estimate, lb, ub, options)
 
 
-problem = createOptimProblem('lsqnonlin', 'x0', initial_estimate, 'objective', @(p)funLSQ(p, y_observed, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear), 'lb', lb, 'ub', ub);
-%stpoints = RandomStartPointSet('NumStartPoints', 5, 'ArtificialBound', 100);
-
-ms = MultiStart('Display', 'iter');
-ms.TolFun = 1e-8;
-[xmultinonlin,errormultinonlin, eflag, output] = run(ms,problem, 10)
+% problem = createOptimProblem('lsqnonlin', 'x0', initial_estimate, 'objective', @(p)funLSQ(p, y_observed, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear), 'lb', lb, 'ub', ub);
+% %stpoints = RandomStartPointSet('NumStartPoints', 5, 'ArtificialBound', 100);
+% 
+% ms = MultiStart('Display', 'iter');
+% ms.TolFun = 1e-8;
+% [xmultinonlin,errormultinonlin, eflag, output] = run(ms,problem, 10)
