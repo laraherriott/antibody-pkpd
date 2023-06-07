@@ -105,18 +105,18 @@ end
 y_observed = [plaque_observed, ab_observed];
 %y_observed2 = ab_d_obs;
 
-initial_estimate = [k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_ADCP, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear];
-lb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-ub = [0.1, 0.1, 1e-4, 0.1, 1e-4, 1e-6, 1e-4, 1e-4, 1, 1, 10, 1e-3, 10, 1e-3, 1e-4];%[1e-4, 0.01, 1e-5, 1e-6];
+initial_estimate = [k_ADCP];
+lb = [0];%, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+ub = [10];%[0.1, 0.01, 1e-5, 0.1, 1e-4, 1e-6, 1e-4, 1e-4, 0.1, 0.1, 10]; 
 
 options = optimoptions('lsqnonlin', 'OptimalityTolerance',1e-8);
 
-[xlsqnonlin, errorlsqnonlin]  = lsqnonlin(@(p)funLSQ(p, y_observed,  k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2), initial_estimate, lb, ub, options)
+%[xlsqnonlin, errorlsqnonlin]  = lsqnonlin(@(p)funLSQ(p, y_observed,  k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2), initial_estimate, lb, ub, options)
 
 
-% problem = createOptimProblem('lsqnonlin', 'x0', initial_estimate, 'objective', @(p)funLSQ(p, y_observed, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear), 'lb', lb, 'ub', ub);
-% %stpoints = RandomStartPointSet('NumStartPoints', 5, 'ArtificialBound', 100);
-% 
-% ms = MultiStart('Display', 'iter');
-% ms.TolFun = 1e-8;
-% [xmultinonlin,errormultinonlin, eflag, output] = run(ms,problem, 10)
+problem = createOptimProblem('lsqnonlin', 'x0', initial_estimate, 'objective', @(p)funLSQ(p, y_observed, k_in, k_olig_inc, k_olig_sep, k_clear_Abeta, k_plaque_inc, k_plaque_sep, k_clear_olig, k_clear_P, k_synth_FcR, k_clear_FcR, clearance, k_mAb_transport_back, k_mAb_transport, k_mAbcomplex_clear, k_onPP, k_onPD, k_onPF, k_offPF, k_off_ma0, k_off_ma1, k_off_ma2), 'lb', lb, 'ub', ub);
+%stpoints = RandomStartPointSet('NumStartPoints', 5, 'ArtificialBound', 100);
+
+ms = MultiStart('Display', 'iter');
+ms.TolFun = 1e-8;
+[xmultinonlin,errormultinonlin, eflag, output] = run(ms, problem, 10)
