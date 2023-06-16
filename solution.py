@@ -13,7 +13,7 @@ class Solution:
         self.model = model
         if self.model.PD == 'suvr':
             self.name = self.model.SUVr_PD
-            self.y0 = [0, 0, self.model.baseline_SUVr, 0]
+            self.y0 = [0, 0, self.model.baseline_SUVr]
         elif self.model.PD == 'ab':
             self.name = self.model.AB_PD
             self.y0 = [0, 0, self.model.baseline_Abeta]
@@ -58,7 +58,9 @@ class Solution:
         solution = scipy.integrate.solve_ivp(fun=lambda t, y: self.name(t, y),
                                              t_span=[self.t_eval[0], self.t_eval[-1]],
                                              y0=self.y0,
-                                             t_eval=self.t_eval)
+                                             t_eval=self.t_eval,
+                                             max_step=0.1,
+                                             method='LSODA')
 
         #solution = self.euler([self.t_start, self.t_end], self.y0, self.name)
         

@@ -7,77 +7,82 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-from dose_switch import LecanemabModel
+from dose_switch import LecanemabModel2
 from solution import Solution
 
 #random.seed(1)
 
 n = 1
-model_type = 'suvr'
+models = ['suvr', 'ab', 'tau']
+for x in models:
+    model_type = x
 
-doses = [1+x for x in range(20)]
+    doses = [50, 150, 250, 350, 450]
 
-for dose in doses:
+    for dose in doses:
 
-    results = pd.DataFrame()
-    dict_of_cols = {}
+        results = pd.DataFrame()
+        dict_of_cols = {}
 
-    model = LecanemabModel(model_type, 10, (14*24), (24*(365*15)), dose_change=[dose, (28*24), (12*1080)], median_patient=True, param_type='noiiv')
-    model()
-
-
-    # order: baseline SUVr, Kin, Emax, EC50; baseline AB, Kout, slope; baseline ptau, Kout, slope
-    sample = [1.34, 0.232, 1.54, 75.0, 0.0842, 0.367, 0.00155, 4.06, 0.468, 0.00313]
-
-    for i in range(n):
-        # Overwrite parameters for this simulation
-        # model.CL = 0.0181 * 24
-        # model.V1 = 3.22
-        # model.V2 = 2.19
-        model.baseline_SUVr = 1.38 #sample[0]
-        model.SUVr_Kin = sample[1] / (365*24)
-        model.SUVr_Kout = model.SUVr_Kin/model.baseline_SUVr
-        model.Emax = sample[2]
-        model.SUVr_EC50 = sample[3]
-        model.baseline_Abeta = 0.0842 #sample[4]
-        model.Abeta_Kout = sample[5] / (365*24)
-        model.Abeta_slope = sample[6]
-        model.Abeta_Kin = model.Abeta_Kout * model.baseline_Abeta
-        model.baseline_tau = sample[7]
-        model.tau_Kout = sample[8] / (365*24)
-        model.tau_slope = sample[9]
-        model.tau_Kin = model.tau_Kout * model.baseline_tau
-        # Solve model
-
-        solver = Solution(model, 0, (24*(365*15)), 1)
-
-        # Save values
-
-        solutions = solver.solve()
-
-        if i == 0:
-            time = solutions.t
-            results['time'] = time
-
-        biomarker = solutions.y[2]
-        central_L = solutions.y[0]
-        peripheral_L = solutions.y[1]
-
-        dict_of_cols['{}{}'.format(model_type, i)] = biomarker
+        model = LecanemabModel2(model_type, 10, (14*24), (24*(365*15)), dose_change=[dose, (14*24), (12*1080)], median_patient=True, param_type='noiiv')
+        model()
 
 
-    # Process data
-    results = pd.concat([results, pd.DataFrame(dict_of_cols)], axis=1)
+        # order: baseline SUVr, Kin, Emax, EC50; baseline AB, Kout, slope; baseline ptau, Kout, slope
+        sample = [1.34, 0.232, 1.54, 75.0, 0.0842, 0.367, 0.00155, 4.06, 0.468, 0.00313]
 
-    total_df = \
-        results[list(results.filter(regex=model_type))]
-    results["Average"] = total_df.median(axis=1)
-    results["fifth"] = total_df.quantile(q=0.05, axis=1)
-    results["ninety-fifth"] = total_df.quantile(q=0.95, axis=1)
+        for i in range(n):
+            # Overwrite parameters for this simulation
+            # model.CL = 0.0181 * 24
+            # model.V1 = 3.22
+            # model.V2 = 2.19
+            model.baseline_SUVr = 1.38 #sample[0]
+            model.SUVr_Kin = sample[1] / (365*24)
+            model.SUVr_Kout = model.SUVr_Kin/model.baseline_SUVr
+            model.Emax = sample[2]
+            model.SUVr_EC50 = sample[3]
+            model.baseline_Abeta = 0.0842 #sample[4]
+            model.Abeta_Kout = sample[5] / (365*24)
+            model.Abeta_slope = sample[6]
+            model.Abeta_Kin = model.Abeta_Kout * model.baseline_Abeta
+            model.baseline_tau = sample[7]
+            model.tau_Kout = sample[8] / (365*24)
+            model.tau_slope = sample[9]
+            model.tau_Kin = model.tau_Kout * model.baseline_tau
+            # Solve model
 
-    results.to_csv("output/15y_monthly/{}mg_{}_15ycont_param_{}.csv".format(dose, model_type, n), index=False)
+            solver = Solution(model, 0, (24*(365*15)), 1)
 
-# results = pd.read_csv('output/biweekly_1_15y_off_param_suvr.csv')
+            # Save values
+
+            solutions = solver.solve()
+
+            if i == 0:
+                time = solutions.t
+                results['time'] = time
+
+            biomarker = solutions.y[2]
+            central_L = solutions.y[0]
+            peripheral_L = solutions.y[1]
+
+            dict_of_cols['{}{}'.format(model_type, i)] = biomarker
+
+
+        # Process data
+        results = pd.concat([results, pd.DataFrame(dict_of_cols)], axis=1)
+
+        total_df = \
+            results[list(results.filter(regex=model_type))]
+        results["Average"] = total_df.median(axis=1)
+        results["fifth"] = total_df.quantile(q=0.05, axis=1)
+        results["ninety-fifth"] = total_df.quantile(q=0.95, axis=1)
+
+        results.to_csv("output/continuous/{}mg_{}_15ycont_param_{}.csv".format(dose, model_type, n), index=False)
+
+# plt.plot(results['time'], central_L)
+# plt.show()
+
+#results = pd.read_csv('output/15y_monthly/20mg_suvr_15ycont_param_1.csv')
 # results_m = pd.read_csv('output/biweekly_1_15ycont_param_suvr.csv')
 # results_old0 = pd.read_csv('output/mid1_biweekly_1_15y_param_suvr.csv')
 # results_old1 = pd.read_csv('output/mid2_biweekly_1_15y_param_suvr.csv')

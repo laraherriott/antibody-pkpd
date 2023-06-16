@@ -82,7 +82,7 @@ initial_conditions = [initAbeta, initOlig, initPlaque, initFcR, initmAb, initAbe
 # note though that in a more complicated model which takes the full synthesis pathway into account k_in could be fitted for separately, as were the aggregation params
 
 params = Parameters()
-params.add('k_in', value=k_in+1e6, min=0, max=0.1)
+params.add('k_in', value=k_in+1e-6, min=0, max=0.1)#+1e-6
 params.add('k_clear_Abeta', value=k_clear_Abeta, min=0, max=0.1)
 params.add('k_clear_olig', value=k_clear_olig, min=0, max=0.1)
 params.add('k_clear_P', value=k_clear_P, min=0, max=0.1)
@@ -94,9 +94,9 @@ params.add('k_onPF', value=k_onPF, vary=False)#, min=0, max=0.1)
 params.add('k_olig_inc', value=k_olig_inc, min=0, max=0.1)
 params.add('k_olig_sep', value=k_olig_sep, min=0, max=0.1)
 params.add('k_plaque_inc', value=k_plaque_inc, min=0, max=0.1)
-params.add('k_plaque_sep', value=k_plaque_sep+1e12, min=0, max=0.1)
+params.add('k_plaque_sep', value=k_plaque_sep+1e-12, min=0, max=0.1)#+1e-12
 params.add('k_ADCP', value=k_ADCP, min=0, max=1)
-params.add('k_mAbcomplex_clear', value=k_mAbcomplex_clear+1e8, min=0, max=0.1)
+params.add('k_mAbcomplex_clear', value=k_mAbcomplex_clear+1e-8, min=0, max=0.1)#+1e-8
 params.add('k_mAb_transport', value=k_mAb_transport, min=0, max=0.1)
 params.add('k_mAb_transport_back', value=k_mAb_transport_back, min=0, max=0.1)
 params.add('clearance', value=clearance, min=0, max=1)
@@ -212,10 +212,10 @@ def error(params, initial_conditions, tspan, data, dose_list):
     plasma_mAb = sol.y[10]
     #print(len(plaque), len(plasma_mAb))
     prediction = np.column_stack((percentage, plasma_mAb))
-    plaque_per_day = [plaque[i*24] for i in range(56)]
-    mAb_per_day = [plasma_mAb[i*24] for i in range(56)]
-    resid1 = mAb_per_day - data[:,1]
-    resid2 = plaque_per_day - data[:,0]
+    #plaque_per_day = [plaque[i*24] for i in range(56)]
+    #mAb_per_day = [plasma_mAb[i*24] for i in range(56)]
+    resid1 = plasma_mAb - data[:,1]
+    resid2 = percentage - data[:,0]
     return np.concatenate((resid1, resid2)) #(data-sol.y[2])
 
 def dosefn(dose_list, t):
@@ -233,7 +233,7 @@ def dosefn(dose_list, t):
 def per_iteration(params, iteration, resid, *args, **kws):
     print('ITER ', iteration, 'RESID ', sum(resid**2))
 
-tspan = np.arange(0, (24*56*360), 360)
+tspan = np.arange(0, (24*56*360), (360*24))
 time = [i*(7*24*360) for i in [0, 79]]
 fall = [0, 77.5]
 df1 = pd.DataFrame({'Observed': fall,
@@ -267,8 +267,10 @@ solution  = initial_solver(tspan2, initial_conditions, k_in, k_clear_Abeta, k_cl
                    k_off_ma0, k_off_ma1, k_off_ma2, k_offPF, dose_list)
 
 plaque = [(solution.y[2][i] + solution.y[7][i] + solution.y[9][i]) for i in range(len(solution.y[2]))]
+per_plaque = [(((plaque[0]-plaque[i])/plaque[0])*100) for i in range(len(plaque))]
+per_plaque_with_noise = [x + np.random.normal(0,1,1) for x in per_plaque]
 antibody = solution.y[10]
-print(len(plaque), len(antibody))
+
 plaque_with_noise = [x + np.random.normal(0,1,1) for x in plaque]
 antibody_with_noise = [y + np.random.normal(0,1,1) for y in antibody]
 
@@ -276,7 +278,7 @@ antibody_with_noise = [y + np.random.normal(0,1,1) for y in antibody]
 # plt.show()
 
 # data = np.column_stack((data1, data2))
-data = np.column_stack((plaque_with_noise, antibody_with_noise))
+data = np.column_stack((per_plaque_with_noise, antibody_with_noise))
 
 print('Initial run complete after ', (datetime.now()-startTime))
 
@@ -291,9 +293,14 @@ print('Initial run complete after ', (datetime.now()-startTime))
 result = minimize(error, params, args=(initial_conditions, tspan, data, dose_list), method='leastsq', iter_cb=per_iteration)#, nan_policy='omit')
 
 
-with open("output.txt", "a") as f:
-    print(result.params, file=f)
-    print(report_fit(result), file=f)
+# with open("output.txt", "a") as f:
+#     print(result.params, file=f)
+#     print(report_fit(result), file=f)
+
+with open("output.txt", "w") as f:
+    f.write(result.params)
+    f.write('\n')
+    f.write(report_fit(result))
 
 # plt.figure(2)
 # plt.plot(times2, data2, color='r', linestyle='dashed')
